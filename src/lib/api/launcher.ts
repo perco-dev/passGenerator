@@ -70,7 +70,3 @@ function queryParse(queryTail:any){
    let str = params.join("&");
    return str;
 }
-
-async function request(item:string,body:any,query:any){
-    return response;
-}
