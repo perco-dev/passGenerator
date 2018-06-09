@@ -16,11 +16,11 @@ export function autoGenerator(begin:any,end:any,shift:string,hours:number){
   //айдишники возвращенные методом
   let idsMap:any = new Map();
   //Ищем зависимые методы
-  let tempMap:any = new Map(prepare.bootstrap("sysserver/addDeviceEvent").buildDepMap());
+  let willReplacedByIdsDep:any = new Map(prepare.bootstrap("sysserver/addDeviceEvent").buildDepMap());
   //перебираем каждый метод в зависимости
-  for(let item of tempMap.keys()){
+  for(let item of willReplacedByIdsDep.keys()){
     idsMap.set(item,[]);
-    let fds:any = tempMap.get(item);
+    let fds:any = willReplacedByIdsDep.get(item);
     //перебираем данные для метода
     for(let fd in fds){
       //формируем тело запроса
@@ -29,14 +29,24 @@ export function autoGenerator(begin:any,end:any,shift:string,hours:number){
       let query = typeof fds[fd].query === 'undefined' ? null : queryParse(fds[fd].query);
       
       if(query == null){
-        let text:any = request(item,bodyData,query);
+        fetch(`${host}/${item}?token=master`,{headers : headers,method:'PUT',body:JSON.stringify(bodyData)}).then(res=>res.text()).then(body=>{
+          if(typeof JSON.parse(body).id !== 'undefined'){
+            idsMap.get(item).push(JSON.parse(body).id);
+            prepare.bootstrap(item).idSearcher(idsMap,willReplacedByIdsDep);
+          }
+        });
       }
       else{
-        let text:any = request(item,bodyData,query);
+        fetch(`${host}/${item}?token=master&${query}`,{headers : headers,method:'PUT',body:JSON.stringify(bodyData)}).then(res=>res.text()).then(body=>{
+          if(typeof JSON.parse(body).id !== 'undefined'){
+            idsMap.get(item).push(JSON.parse(body).id);
+            prepare.bootstrap(item).idSearcher(idsMap,willReplacedByIdsDep);
+          }
+        });
       }
     }
   }
-  console.log(idsMap);
+  console.log(willReplacedByIdsDep);
 }
 
 export function customGenerator(){
@@ -62,6 +72,5 @@ function queryParse(queryTail:any){
 }
 
 async function request(item:string,body:any,query:any){
-    let response = await fetch(`${host}/${item}?token=master`,{headers : headers,method:'PUT',body:JSON.stringify(body)});
     return response;
 }
