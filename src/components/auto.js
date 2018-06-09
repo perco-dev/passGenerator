@@ -2,6 +2,7 @@ import React,{Component} from 'react';
 import ReactDom from "react-dom";
 import Schedules from "./schedules";
 import "bootstrap/dist/css/bootstrap.css";
+import * as Launcher from '../lib/api/launcher';
 
 class AutoGenerator extends Component{
   state = {
@@ -12,8 +13,8 @@ class AutoGenerator extends Component{
       let date = new Date();
       return `${date.getFullYear()}-${date.getMonth().length !=2 ? '0'+ (date.getMonth() + 1): (date.getMonth()+1)}-${date.getDate().length != 2 ? '0' + date.getDate(): date.getDay()}`;
     },
-    schedule: "",
-    hours : 0
+    schedule: Schedules.schedules[0].name,
+    hours : 1
   }
 
   render(){
@@ -22,7 +23,7 @@ class AutoGenerator extends Component{
       <form onSubmit={this.onSubmit}>
           <div className="row">
             <div className = "col">
-              <label>Начало периода</label> <input type ="date" className="form-control"   value = {this.state.beginDate} onChange = {this.changeBegin}/>
+              <label>Начало периода</label> <input type ="date" className="form-control"  max = {`${this.state.curDate()}`} value = {this.state.beginDate.length == 0 ? this.state.curDate() : this.state.beginDate} onChange = {this.changeBegin}/>
             </div>
             <div className = "col">
               <label>Конец периода</label>  <input type ="date" className="form-control"  max = {`${this.state.curDate()}`} value = {this.state.endDate.length == 0 ? this.state.curDate() : this.state.endDate} onChange = {this.changeEnd}/>
@@ -34,7 +35,7 @@ class AutoGenerator extends Component{
               </select>
             </div>
             <div className="col">
-              <label>Часов размазать</label> <input type ="number" className="form-control" value = {this.state.hours} onChange = {this.changeHour}/>
+              <label>Часов размазать</label> <input type ="number" className="form-control" min = {1} value = {this.state.hours} onChange = {this.changeHour}/>
             </div>
           </div>
             <button type="submit" className="btn btn-primary" style={{'marginTop':'20px'}}>Загенерировать</button>
@@ -64,7 +65,7 @@ class AutoGenerator extends Component{
   }
 
   onSubmit = ()=>{
-    alert(`generator run for period ${this.state.beginDate} - ${this.state.endDate} \n... please input your cvc code`);
+    Launcher.autoGenerator(this.state.beginDate,this.state.endDate,this.state.schedule,this.state.hours);
     event.preventDefault();
   }
 }

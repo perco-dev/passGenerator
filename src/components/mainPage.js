@@ -1,6 +1,7 @@
 import React, {Component} from "react";
 import ReactDom from "react-dom";
 import MainSection from './mainSection'; 
+import Terminal from './terminal';
 import "bootstrap/dist/css/bootstrap.css";
 
 class MainPage extends Component{
@@ -11,7 +12,7 @@ class MainPage extends Component{
   render(){
     return(
       <div className="container-fluid">
-        <div className="row">
+        <div className="row" id = 'menu'>
           <ul className = "nav nav-tabs">
             <li className = "nav item">
               <a className="nav-link active"onClick = {()=>this.setActiveSection("auto")} href="#">Авто генератор</a>
@@ -28,9 +29,12 @@ class MainPage extends Component{
           </ul>
         </div>
         <div className="row">
-          <div className="col-12" id="content">
+          <div className="col-12" id="content" style={{'maxHeight':'300px','paddingBottom':`${window.innerHeight - window.innerHeight/4}px`}}>
             <MainSection section = {this.state.activeSection}/>
           </div>
+        </div>
+        <div>
+          <Terminal/>
         </div>
       </div>
     );
