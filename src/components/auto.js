@@ -11,7 +11,7 @@ class AutoGenerator extends Component{
     curDate : ()=>{
       if (typeof date === 'undefined'){} 
       let date = new Date();
-      return `${date.getFullYear()}-${date.getMonth().length !=2 ? '0'+ (date.getMonth() + 1): (date.getMonth()+1)}-${date.getDate().length != 2 ? '0' + date.getDate(): date.getDay()}`;
+      return `${date.getFullYear()}-${date.getMonth() < 9 ? '0'+ (date.getMonth() + 1): (date.getMonth()+1)}-${date.getDate() < 10 ? '0' + date.getDate(): date.getDate()}`;
     },
     schedule: Schedules.schedules[0].name,
     hours : 1
