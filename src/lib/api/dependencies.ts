@@ -21,13 +21,15 @@
   "devices":{
     "fields":[
       {
-        "body":{
-          "deviceType":2,
-          "ipAddr": "95.173.136.70",
-          "netMask": "160.82.119.185",
-          "ipRouter":"13.131.15.45",
-          "macAddr":"08:62:66:7b:d7:42"
-        }
+        "body":[
+          {
+            "deviceType":17,
+            "ipAddr": "95.173.136.70",
+            "netMask": "160.82.119.185",
+            "ipRouter":"13.131.15.45",
+            "macAddr":"08:62:66:7b:d7:42"
+          }
+        ]
       }
     ],
     "dependedTest":[]

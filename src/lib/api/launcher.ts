@@ -13,7 +13,7 @@ let headers = {'Content-Type':'application/json','Accept': 'application/json'};
  */
 
 export function autoGenerator(begin:any,end:any,shift:string,hours:number){
-  //айдишники возвращенные методом
+  //айдишники возвращенные API методом
   let idsMap:any = new Map();
   //Ищем зависимые методы
   let willReplacedByIdsDep:any = new Map(prepare.bootstrap("sysserver/addDeviceEvent").buildDepMap());
@@ -27,7 +27,6 @@ export function autoGenerator(begin:any,end:any,shift:string,hours:number){
       let bodyData = typeof fds[fd].body === 'undefined' ? {} : fds[fd].body;
       //запрос
       let query = typeof fds[fd].query === 'undefined' ? null : queryParse(fds[fd].query);
-      
       if(query == null){
         fetch(`${host}/${item}?token=master`,{headers : headers,method:'PUT',body:JSON.stringify(bodyData)}).then(res=>res.text()).then(body=>{
           if(typeof JSON.parse(body).id !== 'undefined'){
@@ -46,21 +45,7 @@ export function autoGenerator(begin:any,end:any,shift:string,hours:number){
       }
     }
   }
-  console.log(willReplacedByIdsDep);
 }
-
-export function customGenerator(){
-
-}
-
-export function addPass(){
-
-}
-
-export function delpass(){
-
-}
-
 
 function queryParse(queryTail:any){
    let params:any = [];

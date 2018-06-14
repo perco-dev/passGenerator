@@ -58,15 +58,14 @@ class Prepare{
       if(this.depend[depItem].dependedTest.length!=0 && this.depend[depItem].dependedTest.includes(this.test)){
         //Перебираем массив айдишников для выполняемого теста 
         for(let index in idsMap.get(this.test)){
-          console.log(idsMap.get(this.test)[index]);
           //Перебираем все поля теста для BODY
           if(typeof depMap.get(depItem)[index]["body"] != "undefined"){
             //ищем ключ , значение которого соответствует this.test_id_index
             replaceId(depMap,idsMap,depItem,this.test,index,"body");         
           }
-
-          //TODO : для QUERY
-
+          if(typeof depMap.get(depItem)[index]["query"] != "undefined"){
+            replaceId(depMap,idsMap,depItem,this.test,index,"query");
+          }
         }
       }
     }
@@ -77,23 +76,23 @@ class Prepare{
 function replaceId(depMap:any,idsMap:any,depItem:string,test:string,index:string,section:string){
   for(let key of Object.keys(depMap.get(depItem)[index][`${section}`])){
     //если значение строка - все просто!
-    if(typeof depMap.get(depItem)[index][`${section}`][key] != "object" && depMap.get(depItem)[index]["body"][key] == `${test}_id_${index}`){
+    if(typeof depMap.get(depItem)[index][`${section}`][key] != "object" && depMap.get(depItem)[index][`${section}`][key] == `${test}_id_${index}`){
       if(typeof mustBeArray[depItem] != "undefined" && mustBeArray[depItem].includes(key)){
-        depMap.get(depItem)[index]["body"][key] = [idsMap.get(test)[index]];
+        depMap.get(depItem)[index][`${section}`][key] = [idsMap.get(test)[index]];
       }
       else{
-        depMap.get(depItem)[index]["body"][key] = idsMap.get(test)[index];
+        depMap.get(depItem)[index][`${section}`][key] = idsMap.get(test)[index];
       }
     }
     // если объект или массив  
-    else if (typeof depMap.get(depItem)[index]["body"][key] == "object"){
+    else if (typeof depMap.get(depItem)[index][`${section}`][key] == "object"){
       if(typeof mustBeArray[depItem] != "undefined" && mustBeArray[depItem].includes(key)){
-        let rp = JSON.stringify(depMap.get(depItem)[index]["body"][key]).replace(new RegExp(`\"${test}_id_${index}\"`),"["+idsMap.get(test)[index]+"]");
-        depMap.get(depItem)[index]["body"][key] = JSON.parse(rp);
+        let rp = JSON.stringify(depMap.get(depItem)[index][`${section}`][key]).replace(new RegExp(`\"${test}_id_${index}\"`),"["+idsMap.get(test)[index]+"]");
+        depMap.get(depItem)[index][`${section}`][key] = JSON.parse(rp);
       }
       else{
-        let rp = JSON.stringify(depMap.get(depItem)[index]["body"][key]).replace(new RegExp(`${test}_id_${index}`),idsMap.get(test)[index]);
-        depMap.get(depItem)[index]["body"][key] = JSON.parse(rp);
+        let rp = JSON.stringify(depMap.get(depItem)[index][`${section}`][key]).replace(new RegExp(`${test}_id_${index}`),idsMap.get(test)[index]);
+        depMap.get(depItem)[index][`${section}`][key] = JSON.parse(rp);
       }
     }
   }
