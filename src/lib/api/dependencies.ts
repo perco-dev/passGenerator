@@ -15,7 +15,7 @@
         }
       }
     ],
-    "dependedTest":["devices/{id}/attach","devices"/*"users/operator","users/staff"*/]
+    "dependedTest":["devices/{id}/attach","devices",/*"users/staff"*/]
   },
   
   "devices":{
@@ -46,29 +46,27 @@
         }
       }
     ],
-    "dependedTest":['rooms',"devices"]
+    "dependedTest":['rooms',"devices"],
+    "method":"POST"
   },
 
   "users/staff":{
     "fields":[
       {
         "body":{
-          "last_name" : "unque",
-          "first_name" : "unique",
-          "hiring_date": "2008-12-12",
-          "division":"divisions_id_0"
+          "last_name" : "генератор",
+          "first_name" : "генераторович",
+          "identifier": [
+            {
+              "begin_datetime": "begin_datetime_id_0",
+              "end_datetime": "end_datetime_id_0",
+              "identifier": "111111"
+            }
+          ]
         }
       },
-      {
-        "body":{
-          "last_name" : "chaiName2",
-          "first_name" : "chaiName2",
-          "hiring_date": "2008-12-12",
-          "division":"divisions_id_1"
-        }
-      }
     ],
-    "dependedTest" : ["divisions","positions","accessTemplates","taSchedule"]
+    "dependedTest" : []
   },
 
   "rooms":{
