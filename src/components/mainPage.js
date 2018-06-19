@@ -33,7 +33,7 @@ class MainPage extends Component{
             <MainSection section = {this.state.activeSection}/>
           </div>
         </div>
-        <div>
+        <div id = "terminal">
           <Terminal/>
         </div>
       </div>

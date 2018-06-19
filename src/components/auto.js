@@ -6,13 +6,13 @@ import * as Launcher from '../lib/api/launcher';
 
 class AutoGenerator extends Component{
   state = {
-    beginDate : "",
-    endDate: "",
     curDate : ()=>{
       if (typeof date === 'undefined'){} 
       let date = new Date();
       return `${date.getFullYear()}-${date.getMonth() < 9 ? '0'+ (date.getMonth() + 1): (date.getMonth()+1)}-${date.getDate() < 10 ? '0' + date.getDate(): date.getDate()}`;
     },
+    beginDate : "",
+    endDate: "",
     schedule: Schedules.schedules[0].name,
     hours : 1
   }
@@ -65,7 +65,7 @@ class AutoGenerator extends Component{
   }
 
   onSubmit = ()=>{
-    Launcher.autoGenerator(this.state.beginDate,this.state.endDate,this.state.schedule,this.state.hours);
+    new Launcher.autoGenerator(this.state.beginDate,this.state.endDate,this.state.schedule,this.state.hours);
     event.preventDefault();
   }
 }

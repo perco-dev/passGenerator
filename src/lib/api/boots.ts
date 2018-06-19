@@ -1,4 +1,3 @@
-//let depend = JSON.parse(JSON.stringify(require('./dependencies.json')));
 import * as depend from './dependencies';
 
 let mustBeArray:any = {
@@ -22,7 +21,7 @@ class Prepare{
   }
   
   buildDepMap(){
-    let depMap = new Map();
+    let depMap:any = new Map();
     let testFields = typeof this.depend[this.test] === "undefined" ? null : this.depend[this.test];
     if (testFields == null) throw new Error (`##Нет данных для теста ${this.test}##`);
 
@@ -140,7 +139,7 @@ function buildDependencies(test:string,dp_tests:Array<string>,arr:Array<string>)
 }
 
 function uniqueFilter(arr:Array<string>){
-  let uArr = [];
+  let uArr:any = [];
   for(let key in arr){
     if(uArr.indexOf(arr[key])==-1){
       uArr.push(arr[key]);

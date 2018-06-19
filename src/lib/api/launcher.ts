@@ -1,6 +1,9 @@
 import 'unfetch/polyfill';
 import * as depend from '../../lib/api/dependencies'
-import * as prepare from './boots.js';
+import * as prepare from './boots';
+import * as React from 'react';
+import * as ReactDom from 'react-dom';
+import Terminal from '../../components/terminal.js';
 
 const host:string = 'http://localhost:8080/api'; 
 let headers:any     = {'Content-Type':'application/json','Accept': 'application/json'};
@@ -16,17 +19,22 @@ let depencies:any = depend.default;
  */
 
 export async function autoGenerator(begin:any,end:any,shift:string,hours:number){
-  console.log(begin,end,shift,hours);
+  //
+  let textArea = ReactDom.render(React.createElement(Terminal),document.getElementById("terminal"));
+  //console.log(begin,end,shift,hours);
   //айдишники возвращенные API методом
   let idsMap:any = new Map();
   //Ищем зависимые методы
   let willReplacedByIdsDep:any = new Map(prepare.bootstrap("sysserver/addDeviceEvent").buildDepMap());
+  await textArea.setState({text:"сформированы зависимые методы"});
+  /**
+   * ДОБАВЛЕНИЕ ДАННЫХ ИЗ lib/api/dependecies
+   */
 
   //перебираем каждый метод в зависимости
   for(let item of willReplacedByIdsDep.keys()){
     if (item === "sysserver/addDeviceEvent") continue;
 
-    
     //для подстановки id в название метода
     let methodString:any = Array.from(item.split("/"));
     
@@ -52,51 +60,69 @@ export async function autoGenerator(begin:any,end:any,shift:string,hours:number)
     for(let fd = 0;fd < fds.length;fd++){
       //формируем тело запроса
       let bodyData = typeof fds[fd].body === 'undefined' ? {} : fds[fd].body;
-      
       //параметры запроса
       let query = typeof fds[fd].query === 'undefined' ? "" : "&" + queryParse(fds[fd].query);
-      
       //Метод POST || PUT
       let method  = typeof depencies[`${item}`].method === 'undefined' ? "PUT" : depencies[`${item}`].method;
-      
-      let id = await asyncFetch(item,query,bodyData,methodString,method);
-      
+      //выполняем запрос
+      let id = await asyncFetch(item,query,bodyData,methodString,method).catch(async error=>{
+        await textArea.setState({text:error});
+      });
+      await textArea.setState({text:`метод ${item} завершен успешно`});
+      //если в респонсе есть айди добавляем его в idsMap и вставляем значение в зависимости
       if(typeof id != 'undefined' && id != 0){
         idsMap.get(item).push(id);
         prepare.bootstrap(item).idSearcher(idsMap,willReplacedByIdsDep);
       }             
     }
   }
-  
-  //console.log(willReplacedByIdsDep,begin,end,hours,shift);
-  
+  /**
+   * УДАЛЕНИЕ ДАННЫХ ИЗ БАЗЫ ПОСЛЕ ГЕНЕРАЦИИ
+   */
   //Детачим контроллер
-  await asyncFetch(`devices/${idsMap.get('devices')[0]}/detach`,"",null,null,"POST");
-  deleteDependencies(idsMap);
-
+  await asyncFetch(`devices/${idsMap.get('devices')[0]}/detach`,"",null,null,"POST").catch(async error=>{
+    await textArea.setState({text:error});
+  });
+  textArea.setState({text:"Контроллер отязан от помещения"});
+  await deleteDependencies(idsMap,textArea);
 }
 
-async function deleteDependencies(ids:any){
+/**
+ * 
+ * @param ids массив типа метод - id
+ * возвращает void
+ */
+async function deleteDependencies(ids:any,textArea:any){
   for (let item of ids.keys()){
     for(let key in ids.get(item)){
-      let res = await asyncFetch(item,"",null,`${item}/${ids.get(item)[key]}`,"DELETE").catch(e=>{
-        console.log(e);
+      let res = await asyncFetch(item,"",null,`${item}/${ids.get(item)[key]}`,"DELETE").catch(async error=>{
+        await textArea.setState({error});
       });
+      textArea.setState({text:`метод ${item} завершен успешно`});
     }
   }
 }
-
+/**
+ * 
+ * @param item метод
+ * @param query параметры запроса
+ * @param bodyData тело запроса
+ * @param methodString метод , если в пути  присутствует id
+ * @param method тип запроса
+ * Возвращает id если PГЕ и 0 если POST
+ */
 async function asyncFetch(item:string,query:string,bodyData:any,methodString:any,method:string){
-  //if(method == "DELETE") headers = {'Accept': 'application/json'};
   try {
     let response = await fetch(`${host}/${methodString == null ? item : methodString}?token=master${methodString == null ? query : ""}`,{
+      mode:'cors',
       headers : headers,
       method:method,
       body:`${bodyData != null ? JSON.stringify(bodyData) : ""}`
     });
+
     let responseBody  = await response.text();
 
-    console.log(responseBody);
+    //console.log(item,bodyData,responseBody);
     
     // Если айдишник 1
     if(typeof JSON.parse(responseBody).id !== 'undefined'){
@@ -112,10 +138,14 @@ async function asyncFetch(item:string,query:string,bodyData:any,methodString:any
     }
   }
   catch(error){
-    console.log(error);
+    throw new Error(error);
   }
 }
 
+/**
+ * 
+ * @param queryTail формирует строку запроса в соответствии с стандартом 
+ */
 function queryParse(queryTail:any){
    let params:any = [];
    Object.keys(queryTail).forEach(el=>{
