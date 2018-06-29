@@ -19,9 +19,11 @@ let depencies:any = depend.default;
  */
 
 export async function autoGenerator(begin:any,end:any,shift:string,hours:number){
-  //
   let textArea = ReactDom.render(React.createElement(Terminal),document.getElementById("terminal"));
-  //console.log(begin,end,shift,hours);
+  console.log(begin,end,shift,hours);
+  if(begin.split('-').length != 3 || end.split('-').length != 3) {
+    await textArea.setState({text:"Не указана дата начала или дата конца генерации"});
+  }
   //айдишники возвращенные API методом
   let idsMap:any = new Map();
   //Ищем зависимые методы
@@ -83,7 +85,7 @@ export async function autoGenerator(begin:any,end:any,shift:string,hours:number)
   await asyncFetch(`devices/${idsMap.get('devices')[0]}/detach`,"",null,null,"POST").catch(async error=>{
     await textArea.setState({text:error});
   });
-  textArea.setState({text:"Контроллер отязан от помещения"});
+  textArea.setState({text:"Контроллер отвязан от помещения"});
   await deleteDependencies(idsMap,textArea);
 }
 

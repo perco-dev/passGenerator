@@ -5,28 +5,27 @@ import "bootstrap/dist/css/bootstrap.css";
 import * as Launcher from '../lib/api/launcher';
 
 class AutoGenerator extends Component{
-  state = {
-    curDate : ()=>{
-      if (typeof date === 'undefined'){} 
-      let date = new Date();
-      return `${date.getFullYear()}-${date.getMonth() < 9 ? '0'+ (date.getMonth() + 1): (date.getMonth()+1)}-${date.getDate() < 10 ? '0' + date.getDate(): date.getDate()}`;
-    },
-    beginDate : "",
-    endDate: "",
-    schedule: Schedules.schedules[0].name,
-    hours : 1
+  constructor(props){
+    super(props);
+    this.date = new Date();
+    this.today = `${this.date.getFullYear()}-${this.date.getMonth() < 9 ? '0'+ (this.date.getMonth() + 1): (this.date.getMonth()+1)}-${this.date.getDate() < 10 ? '0' + this.date.getDate(): this.date.getDate()}`;
+    this.state = {
+      beginDate : ""/*this.today*/,
+      endDate : this.today,
+      schedule : Schedules.schedules[0].name,
+      hours : 1
+    }
   }
-
   render(){
     const schedulesList = Schedules.schedules.map((sch)=><option key = {sch.name}>{sch.name}</option>)
     return(
       <form onSubmit={this.onSubmit}>
           <div className="row">
             <div className = "col">
-              <label>Начало периода</label> <input type ="date" className="form-control"  max = {`${this.state.curDate()}`} value = {this.state.beginDate.length == 0 ? this.state.curDate() : this.state.beginDate} onChange = {this.changeBegin}/>
+              <label>Начало периода</label> <input type ="date" className="form-control"  max = {`${this.today}`} value = {this.state.beginDate} onChange = {this.changeBegin}/>
             </div>
             <div className = "col">
-              <label>Конец периода</label>  <input type ="date" className="form-control"  max = {`${this.state.curDate()}`} value = {this.state.endDate.length == 0 ? this.state.curDate() : this.state.endDate} onChange = {this.changeEnd}/>
+              <label>Конец периода</label>  <input type ="date" className="form-control"  max = {`${this.today}`} value = {this.state.endDate} onChange = {this.changeEnd}/>
             </div>
             <div className="col">
               <label>График работы</label>

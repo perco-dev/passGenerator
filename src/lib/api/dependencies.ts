@@ -56,6 +56,8 @@
         "body":{
           "last_name" : "генератор",
           "first_name" : "генераторович",
+          "division" : "divisions_id_0", 
+          "hiring_date": "begin_datetime_id_0",
           "identifier": [
             {
               "begin_datetime": "begin_datetime_id_0",
@@ -66,7 +68,18 @@
         }
       },
     ],
-    "dependedTest" : []
+    "dependedTest" : ["divisions"]
+  },
+  
+  "divisions":{
+    "fields":[
+      {
+        "body":{
+          "parent_id": 0,
+          "name": "it",
+        }
+      }
+    ]
   },
 
   "rooms":{
