@@ -3,21 +3,29 @@ import ReactDom from "react-dom";
 import Schedules from "./schedules";
 import "bootstrap/dist/css/bootstrap.css";
 import * as Launcher from '../lib/api/launcher';
+import propTypes from 'prop-types';
 
 class AutoGenerator extends Component{
   constructor(props){
     super(props);
+    
     this.date = new Date();
+
     this.today = `${this.date.getFullYear()}-${this.date.getMonth() < 9 ? '0'+ (this.date.getMonth() + 1): (this.date.getMonth()+1)}-${this.date.getDate() < 10 ? '0' + this.date.getDate(): this.date.getDate()}`;
     this.state = {
-      beginDate : ""/*this.today*/,
+      beginDate : ''/*this.today*/,
       endDate : this.today,
       schedule : Schedules.schedules[0].name,
       hours : 1
     }
   }
+  
+  static propTypes = {
+    updateMsg: propTypes.func.isRequired
+  }
+
   render(){
-    const schedulesList = Schedules.schedules.map((sch)=><option key = {sch.name}>{sch.name}</option>)
+    const {schedulesList} = Schedules.schedules.map((sch)=><option key = {sch.name}>{sch.name}</option>);
     return(
       <form onSubmit={this.onSubmit}>
           <div className="row">
@@ -63,9 +71,14 @@ class AutoGenerator extends Component{
     })
   }
 
-  onSubmit = ()=>{
-    new Launcher.autoGenerator(this.state.beginDate,this.state.endDate,this.state.schedule,this.state.hours);
-    event.preventDefault();
+  onSubmit = async ()=> {
+      const {updateMsg} = this.props.updateMsg;
+      await new Launcher.autoGenerator(this.state.beginDate,this.state.endDate,this.state.schedule,this.state.hours).catch(
+        reason=>{
+          console.log(reason);
+          this.props.updateMsg(reason);
+        }
+      );
   }
 }
 export default AutoGenerator

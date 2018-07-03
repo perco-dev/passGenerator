@@ -5,6 +5,10 @@ import AutoGenerator from './auto';
 import "bootstrap/dist/css/bootstrap.css";
 
 class MainSection extends Component{
+  static propTypes = {
+    section: propTypes.string.isRequired,
+    updateMsg: propTypes.func.isRequired
+  }
 
   render(){
     return(
@@ -15,19 +19,15 @@ class MainSection extends Component{
   }
 
   showSection(){
-    const section = this.props.section;
+    const {section,updateMsg} = this.props;
     if(section == "auto"){
-      return <AutoGenerator/>
+      return <AutoGenerator updateMsg = {updateMsg}/>
     }
     else{
       return <p>"Ooops no component!!!"</p>
     }
   }
 
-}
-
-MainSection.propTypes = {
-  section : propTypes.string.isRequired
 }
 
 export default MainSection

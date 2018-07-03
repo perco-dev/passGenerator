@@ -19,11 +19,13 @@ let depencies:any = depend.default;
  */
 
 export async function autoGenerator(begin:any,end:any,shift:string,hours:number){
-  let textArea = ReactDom.render(React.createElement(Terminal),document.getElementById("terminal"));
-  console.log(begin,end,shift,hours);
   if(begin.split('-').length != 3 || end.split('-').length != 3) {
-    await textArea.setState({text:"Не указана дата начала или дата конца генерации"});
+    return Promise.reject("Не указана дата начала или дата конца генерации");
   }
+
+  let textArea = ReactDom.render(React.createElement(Terminal),document.getElementById("terminal"));
+  //Проверка дат
+
   //айдишники возвращенные API методом
   let idsMap:any = new Map();
   //Ищем зависимые методы
@@ -32,7 +34,6 @@ export async function autoGenerator(begin:any,end:any,shift:string,hours:number)
   /**
    * ДОБАВЛЕНИЕ ДАННЫХ ИЗ lib/api/dependecies
    */
-
   //перебираем каждый метод в зависимости
   for(let item of willReplacedByIdsDep.keys()){
     if (item === "sysserver/addDeviceEvent") continue;

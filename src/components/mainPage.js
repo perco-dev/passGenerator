@@ -6,7 +6,8 @@ import "bootstrap/dist/css/bootstrap.css";
 
 class MainPage extends Component{
   state = {
-    activeSection: "auto"
+    activeSection: "auto",
+    termText: []
   }
 
   render(){
@@ -30,11 +31,14 @@ class MainPage extends Component{
         </div>
         <div className="row">
           <div className="col-12" id="content" style={{'maxHeight':'300px','paddingBottom':`${window.innerHeight - window.innerHeight/4}px`}}>
-            <MainSection section = {this.state.activeSection}/>
+            <MainSection 
+              section = {this.state.activeSection}
+              updateMsg  = {this.updateTermText}
+            />
           </div>
         </div>
         <div id = "terminal">
-          <Terminal/>
+          <Terminal text = {this.state.termText}/>
         </div>
       </div>
     );
@@ -53,6 +57,9 @@ class MainPage extends Component{
     else if(section === "remove"){
       this.setState({activeSection:"remove"});
     }
+  }
+  updateTermText = value =>{
+    this.setState({termText : this.state.termText.concat([value])});
   }
 }
 
