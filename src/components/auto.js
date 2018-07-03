@@ -13,7 +13,7 @@ class AutoGenerator extends Component{
 
     this.today = `${this.date.getFullYear()}-${this.date.getMonth() < 9 ? '0'+ (this.date.getMonth() + 1): (this.date.getMonth()+1)}-${this.date.getDate() < 10 ? '0' + this.date.getDate(): this.date.getDate()}`;
     this.state = {
-      beginDate : ''/*this.today*/,
+      beginDate : this.today,
       endDate : this.today,
       schedule : Schedules.schedules[0].name,
       hours : 1
@@ -72,13 +72,12 @@ class AutoGenerator extends Component{
   }
 
   onSubmit = async ()=> {
-      const {updateMsg} = this.props.updateMsg;
-      await new Launcher.autoGenerator(this.state.beginDate,this.state.endDate,this.state.schedule,this.state.hours).catch(
-        reason=>{
-          console.log(reason);
-          this.props.updateMsg(reason);
-        }
-      );
+    const {updateMsg} = this.props.updateMsg;
+    await new Launcher.autoGenerator(this.state.beginDate,this.state.endDate,this.state.schedule,this.state.hours).catch(
+      reason=>{
+        this.props.updateMsg(reason);
+      }
+    );
   }
 }
 export default AutoGenerator

@@ -1,20 +1,16 @@
-import React,{Component,PureComponent} from 'react';
+import React, {Component} from 'react';
 import propTypes from 'prop-types' ; // ES6
 import "bootstrap/dist/css/bootstrap.css";
 
-class Terminal extends PureComponent{
-  state = {
-    text : '',
-    list : []
-  }
+class Terminal extends Component{
 
-  componentWillUpdate(){
-    console.log(this.state.text);
-    this.state.list.push(this.state.text);
+  static propTypes = {
+    text: propTypes.array.isRequired
   }
 
   render(){
-    
+    console.log("FFF",this.props);
+    const {text} = this.props;
     return(
       <output className="col-12" style = {{
         'backgroundColor':'#F0F0F0',
@@ -22,7 +18,7 @@ class Terminal extends PureComponent{
         'border':'3px inset #E8E8E8',
         'overflow':'scroll'
         }}>
-        {this.state.list.map(item=><p style = {{'font-family':'monospace','margin':'0px','color':'green'}}>{item}</p>)}
+        {text.map(item=><p style = {{'font-family':'monospace','margin':'0px','color':'green'}}>{item}</p>)}
       </output>
     )
   }

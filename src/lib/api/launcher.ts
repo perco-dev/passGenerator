@@ -18,19 +18,23 @@ let depencies:any = depend.default;
  * @param hours 
  */
 
+async function renderComp(props:string,arr:any){
+  arr.push(props);
+  ReactDom.render(React.createElement(Terminal,{text:arr}),document.getElementById('terminal'))  
+}
+
 export async function autoGenerator(begin:any,end:any,shift:string,hours:number){
+  //массив сообщений
+  let arr:any = [];
+  //Проверка дат
   if(begin.split('-').length != 3 || end.split('-').length != 3) {
     return Promise.reject("Не указана дата начала или дата конца генерации");
   }
-
-  let textArea = ReactDom.render(React.createElement(Terminal),document.getElementById("terminal"));
-  //Проверка дат
-
   //айдишники возвращенные API методом
   let idsMap:any = new Map();
   //Ищем зависимые методы
   let willReplacedByIdsDep:any = new Map(prepare.bootstrap("sysserver/addDeviceEvent").buildDepMap());
-  await textArea.setState({text:"сформированы зависимые методы"});
+  await renderComp("сформированы зависимые методы",arr);
   /**
    * ДОБАВЛЕНИЕ ДАННЫХ ИЗ lib/api/dependecies
    */
@@ -69,9 +73,10 @@ export async function autoGenerator(begin:any,end:any,shift:string,hours:number)
       let method  = typeof depencies[`${item}`].method === 'undefined' ? "PUT" : depencies[`${item}`].method;
       //выполняем запрос
       let id = await asyncFetch(item,query,bodyData,methodString,method).catch(async error=>{
-        await textArea.setState({text:error});
+        await renderComp(error,arr);
       });
-      await textArea.setState({text:`метод ${item} завершен успешно`});
+      //await textArea.setState({text:`метод ${item} завершен успешно`});
+      renderComp(`метод ${item} завершен успешно`,arr);
       //если в респонсе есть айди добавляем его в idsMap и вставляем значение в зависимости
       if(typeof id != 'undefined' && id != 0){
         idsMap.get(item).push(id);
@@ -84,10 +89,10 @@ export async function autoGenerator(begin:any,end:any,shift:string,hours:number)
    */
   //Детачим контроллер
   await asyncFetch(`devices/${idsMap.get('devices')[0]}/detach`,"",null,null,"POST").catch(async error=>{
-    await textArea.setState({text:error});
+    await renderComp(error,arr);
   });
-  textArea.setState({text:"Контроллер отвязан от помещения"});
-  await deleteDependencies(idsMap,textArea);
+  await renderComp("Контроллер отвязан от помещения",arr);
+  await deleteDependencies(idsMap,arr);
 }
 
 /**
@@ -95,13 +100,13 @@ export async function autoGenerator(begin:any,end:any,shift:string,hours:number)
  * @param ids массив типа метод - id
  * возвращает void
  */
-async function deleteDependencies(ids:any,textArea:any){
+async function deleteDependencies(ids:any,arr:any){
   for (let item of ids.keys()){
     for(let key in ids.get(item)){
       let res = await asyncFetch(item,"",null,`${item}/${ids.get(item)[key]}`,"DELETE").catch(async error=>{
-        await textArea.setState({error});
+        await renderComp(error,arr);
       });
-      textArea.setState({text:`метод ${item} завершен успешно`});
+      await renderComp(`метод ${item} завершен успешно`,arr);
     }
   }
 }
