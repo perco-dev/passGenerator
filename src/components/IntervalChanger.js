@@ -33,11 +33,6 @@ class IntervalChanger extends Component {
     }
   }
   
-  
-  componentWillUpdate(nextProps,nextState){
-    console.log(nextState);
-  }
-
   render() {
     return (
       <div>
@@ -55,6 +50,15 @@ class IntervalChanger extends Component {
             </li>
             <li className="nav-item">
               <a className={this.state.week.thursday.active ? "nav-link active":"nav-link"} href="#" id='thursday' onClick={this.setActive} ref = {this.setRef} >чтв</a>
+            </li>
+            <li className="nav-item">
+              <a className={this.state.week.friday.active ? "nav-link active":"nav-link"} href="#" id='friday' onClick={this.setActive} ref = {this.setRef} >птн</a>
+            </li>
+            <li className="nav-item">
+              <a className={this.state.week.saturday.active ? "nav-link active":"nav-link"} href="#" id='saturday' onClick={this.setActive} ref = {this.setRef} >сбб</a>
+            </li>
+            <li className="nav-item">
+              <a className={this.state.week.sunday.active ? "nav-link active":"nav-link"} href="#" id='sunday' onClick={this.setActive} ref = {this.setRef}>вск</a>
             </li>
           </ul>
           <div style = {{'margin-top':'20px'}}>

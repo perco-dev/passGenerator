@@ -37,6 +37,7 @@ class AutoGenerator extends Component {
             <input type='number' className='form-control' onChange = {this.changeValue('hours')} value = {this.props.schedule.hours}/>
           </div>
         </div>
+        <hr style = {{'border': 'none','background-color':'rgb(230, 230, 230)','color': 'red','height': '2px'}}/>
         {this.showScheduleConfig()}
       </form>
     )
@@ -53,7 +54,7 @@ class AutoGenerator extends Component {
     const type = this.props.schedule.scheduleType;
     switch(type){
       case 'Недельный' : {
-        return <div style={{'margin-top':'50px'}}>
+        return <div style={{'margin-top':'10px'}}>
           <div className='form-row'>
             <div className='form-group col-md-3'>
               <label>Приходить позже</label>
@@ -73,29 +74,29 @@ class AutoGenerator extends Component {
             </div>
           </div>
           <div className='form-row'>
-            <div className = 'col-md-1'>
-              <label>Не выходной</label>
-              <input type='checkbox' className='form-control' onChange={this.changeValue('is_not_holiday')}/>
+            <div className='form-group col-md-3'>
+              <label>Название графика</label>
+              <input type='text' className = 'form-control' onChange = {this.changeValue('name')}/>
             </div>
-            <div className = 'col-md-1'>
-              <label>ПервоНах</label>
-              <input type='checkbox' className='form-control' onChange={this.changeValue('is_first_input_last_output')}/>
-            </div>
-            <div className="form-group col-md-3 offset-md-1">
+            <div className="form-group col-md-3">
               <label>Какой-то бегинДатэ</label>
               <input type='date' className='form-control' value = {this.props.schedule.beginDate} onChange={this.changeValue('begin_date')}/>
             </div>
-
-            <div className = 'form-group col-md-6'> 
+            <div className = 'col-3'>
+                <label>Не выходной</label>
+                <input type='checkbox' className='form-control col-1' onChange={this.changeValue('is_not_holiday')}/>
+            </div>
+            <div className = 'col-md-3'>
+              <label >ПервоНах</label>
+              <input type='checkbox' className='form-control col-1' onChange={this.changeValue('is_first_input_last_output')}/>
+            </div>
+            <div className = 'form-group col-md-8'> 
               <IntervalChanger/>
             </div>
           </div>
 
           <div className='form-row'>
-            <div className='form-group col-md-3'>
-              <label>Название графика</label>
-              <input type='text' className = 'form-control' onChange = {this.changeValue('name')}/>
-            </div>
+  
           </div>
         </div>
       }

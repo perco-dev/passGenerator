@@ -13,25 +13,24 @@ class MainPage extends Component {
   }
 
   render(){
-    console.log(this.props)
     const {section} = this.props;
     return(
       <div className='container-fluid'>
-        <ul class="nav">
+        <ul class="nav" style= {{'background-color':'rgb(230, 230, 230)'}}>
           <li class="nav-item">
-            <a class="nav-link active" onClick = {()=>this.sectionChange('auto')} href="#">АВТО</a>
+            <a class="nav-link" onClick = {()=>this.sectionChange('auto')} href="#">авто</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="#" onClick = {()=>this.sectionChange('custom')}>НАСТРАИВАЕМЫЙ</a>
+            <a class="nav-link" href="#" onClick = {()=>this.sectionChange('custom')}>настраиваемый</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="#" onClick = {()=>this.sectionChange('add')}>ДОБАВИТЬ</a>
+            <a class="nav-link" href="#" onClick = {()=>this.sectionChange('add')}>добавить</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="#" onClick = {()=>{this.sectionChange('delete')}}>УДАЛИТЬ</a>
+            <a class="nav-link" href="#" onClick = {()=>{this.sectionChange('delete')}}>удалить</a>
           </li>
         </ul>
-        <div>
+        <div style = {{'margin-top':'20px'}}>
           {this.showSection(section)}
         </div>
       </div>
@@ -41,7 +40,7 @@ class MainPage extends Component {
   showSection = section =>{
     switch (section){
       case 'auto' : return <AutoGenerator/>
-      default : return(<p>Ooops! No mashrooms hier!</p>);
+      default : return(<p>HILARITAS POPVLI ROMANI </p>);
     }
   }
 
