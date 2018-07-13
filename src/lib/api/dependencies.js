@@ -17,18 +17,20 @@ let depend = {
                 }
             }
         ],
-        "dependedTest": ["devices/{id}/attach", "devices" /*"users/operator","users/staff"*/]
+        "dependedTest": ["devices/{id}/attach", "devices", "users/staff"]
     },
     "devices": {
         "fields": [
             {
-                "body": {
-                    "deviceType": 2,
-                    "ipAddr": "95.173.136.70",
-                    "netMask": "160.82.119.185",
-                    "ipRouter": "13.131.15.45",
-                    "macAddr": "08:62:66:7b:d7:42"
-                }
+                "body": [
+                    {
+                        "deviceType": 17,
+                        "ipAddr": "95.173.136.70",
+                        "netMask": "160.82.119.185",
+                        "ipRouter": "13.131.15.45",
+                        "macAddr": "08:62:66:7b:d7:42"
+                    }
+                ]
             }
         ],
         "dependedTest": []
@@ -44,28 +46,39 @@ let depend = {
                 }
             }
         ],
-        "dependedTest": ['rooms', "devices"]
+        "dependedTest": ['rooms', "devices"],
+        "method": "POST"
     },
     "users/staff": {
         "fields": [
             {
                 "body": {
-                    "last_name": "unque",
-                    "first_name": "unique",
-                    "hiring_date": "2008-12-12",
-                    "division": "divisions_id_0"
+                    "last_name": "генератор",
+                    "first_name": "генераторович",
+                    "division": "divisions_id_0",
+                    "hiring_date": "begin_datetime_id_0",
+                    "identifier": [
+                        {
+                            "begin_datetime": "begin_datetime_id_0",
+                            "end_datetime": "end_datetime_id_0",
+                            "identifier": "111111"
+                        }
+                    ]
                 }
             },
+        ],
+        "dependedTest": ["divisions"]
+    },
+    "divisions": {
+        "fields": [
             {
                 "body": {
-                    "last_name": "chaiName2",
-                    "first_name": "chaiName2",
-                    "hiring_date": "2008-12-12",
-                    "division": "divisions_id_1"
+                    "parent_id": 0,
+                    "name": "it",
                 }
             }
         ],
-        "dependedTest": ["divisions", "positions", "accessTemplates", "taSchedule"]
+        "dependedTest": []
     },
     "rooms": {
         "fields": [
@@ -80,4 +93,3 @@ let depend = {
     }
 };
 exports.default = depend;
-//# sourceMappingURL=dependencies.js.map

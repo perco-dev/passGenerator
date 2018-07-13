@@ -15,7 +15,7 @@
         }
       }
     ],
-    "dependedTest":["devices/{id}/attach","devices",/*"users/staff"*/]
+    "dependedTest":["devices/{id}/attach","devices","users/staff"]
   },
   
   "devices":{
@@ -79,7 +79,8 @@
           "name": "it",
         }
       }
-    ]
+    ],
+    "dependedTest": []
   },
 
   "rooms":{

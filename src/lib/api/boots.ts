@@ -30,7 +30,7 @@ class Prepare{
         var depMapArr = buildDependencies(this.test,this.depend[this.test].dependedTest,[]);
       }
       catch(e){
-        throw new Error("##Не возможно построить список зависимых данных! Проверьте dependencies.json для этого теста##");
+        throw new Error("Не возможно построить список зависимых данных! Проверьте dependencies.json для этого теста");
       }
       for(let dep in depMapArr){
         depMap.set(depMapArr[dep],this.depend[depMapArr[dep]].fields);

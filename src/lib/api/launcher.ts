@@ -3,7 +3,7 @@ import * as depend from '../../lib/api/dependencies'
 import * as prepare from './boots';
 import * as React from 'react';
 import * as ReactDom from 'react-dom';
-import Terminal from '../../components/terminal.js';
+import Terminal from '../../components/Terminal';
 
 const host:string = 'http://localhost:8080/api'; 
 let headers:any     = {'Content-Type':'application/json','Accept': 'application/json'};
@@ -18,6 +18,10 @@ let depencies:any = depend.default;
  * @param hours 
  */
 
+ /**функция отображения сообщений в компоненте
+  * props(string) сообщение
+  * arr(array) массив сообщений
+  */
 async function renderComp(props:string,arr:any){
   arr.push(props);
   ReactDom.render(React.createElement(Terminal,{text:arr}),document.getElementById('terminal'))  
@@ -33,16 +37,27 @@ export async function autoGenerator(begin:any,end:any,shift:string,hours:number)
   //айдишники возвращенные API методом
   let idsMap:any = new Map();
   //Ищем зависимые методы
-  let willReplacedByIdsDep:any = new Map(prepare.bootstrap("sysserver/addDeviceEvent").buildDepMap());
-  await renderComp("сформированы зависимые методы",arr);
+  try{
+    // формируем мап всех зависимых методов вида метод => данные
+    var willReplacedByIdsDep:any = new Map(prepare.bootstrap("sysserver/addDeviceEvent").buildDepMap());
+    await renderComp("сформированы зависимые методы",arr);
+  }
+  catch(e){
+    return Promise.reject(`${e}`);
+  }
   /**
    * ДОБАВЛЕНИЕ ДАННЫХ ИЗ lib/api/dependecies
    */
+  //Добавляем начальные и конечные даты для users/staff
+  willReplacedByIdsDep.get('users/staff')[0].body.hiring_date = begin;
+  willReplacedByIdsDep.get('users/staff')[0].body.identifier[0].begin_datetime = begin;
+  willReplacedByIdsDep.get('users/staff')[0].body.identifier[0].end_datetime = end;
+
   //перебираем каждый метод в зависимости
   for(let item of willReplacedByIdsDep.keys()){
     if (item === "sysserver/addDeviceEvent") continue;
 
-    //для подстановки id в название метода
+    //для подстановки id в название метода например POST /devices/{id}/activate
     let methodString:any = Array.from(item.split("/"));
     
     if(methodString.length>1){
@@ -72,16 +87,18 @@ export async function autoGenerator(begin:any,end:any,shift:string,hours:number)
       //Метод POST || PUT
       let method  = typeof depencies[`${item}`].method === 'undefined' ? "PUT" : depencies[`${item}`].method;
       //выполняем запрос
-      let id = await asyncFetch(item,query,bodyData,methodString,method).catch(async error=>{
-        await renderComp(error,arr);
-      });
-      //await textArea.setState({text:`метод ${item} завершен успешно`});
-      renderComp(`метод ${item} завершен успешно`,arr);
+      try{
+        var id = await asyncFetch(item,query,bodyData,methodString,method);
+        renderComp(`метод ${item} завершен успешно`,arr);
+      }
+      catch(e){
+        return Promise.reject(`${e}`);
+      }
       //если в респонсе есть айди добавляем его в idsMap и вставляем значение в зависимости
       if(typeof id != 'undefined' && id != 0){
         idsMap.get(item).push(id);
         prepare.bootstrap(item).idSearcher(idsMap,willReplacedByIdsDep);
-      }             
+      }
     }
   }
   /**
@@ -102,6 +119,10 @@ export async function autoGenerator(begin:any,end:any,shift:string,hours:number)
  */
 async function deleteDependencies(ids:any,arr:any){
   for (let item of ids.keys()){
+    if(item == 'divisions' || 'users/staff'){
+      await renderComp('удалите юзера и подразделение самостоятельно !!!',arr);
+      continue;
+    }
     for(let key in ids.get(item)){
       let res = await asyncFetch(item,"",null,`${item}/${ids.get(item)[key]}`,"DELETE").catch(async error=>{
         await renderComp(error,arr);
