@@ -78,10 +78,6 @@ class AutoGenerator extends Component {
               <label>Название графика</label>
               <input type='text' className = 'form-control' onChange = {this.changeValue('name')}/>
             </div>
-            <div className="form-group col-md-3">
-              <label>Какой-то бегинДатэ</label>
-              <input type='date' className='form-control' value = {this.props.schedule.beginDate} onChange={this.changeValue('begin_date')}/>
-            </div>
             <div className = 'col-3'>
                 <label>Не выходной</label>
                 <input type='checkbox' className='form-control col-1' onChange={this.changeValue('is_not_holiday')}/>

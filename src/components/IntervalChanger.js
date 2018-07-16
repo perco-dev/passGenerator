@@ -178,7 +178,7 @@ class IntervalChanger extends Component {
           }
         }
       }
-      let intervalObj = { [`${this.state.interval}`] :{ begin: min == null ? 0 : min,end:288,id:parseInt(intervals.length,10) } };
+      let intervalObj = { [`${this.state.interval}`] :{ begin: min == null ? 6 : min,end:282,id:parseInt(intervals.length,10) } };
       intervals.push(intervalObj);
       let week = {...this.state.week,...{[`${day}`] : {active:true,intervals:intervals}}}
       this.setState(week);
@@ -215,7 +215,7 @@ class IntervalChanger extends Component {
         return [begin,end]
       }
       else{
-        return ['00:00','24:00']
+        return ['00:30','23:30']
       }
     }
   }
@@ -236,19 +236,6 @@ class IntervalChanger extends Component {
       this.setState(week);
     }
   }
-  
-  /*
-  changeRange = index => value => {
-    let day = this.findActiveDay();
-    if(day!=null){
-      let {intervals} = this.state['week'][`${day}`];
-      intervals[index].begin = value[0];
-      intervals[index].end = value[1];
-      let week = {...this.state.week,...{ [`${day}`] : { active:true,intervals:intervals } } }
-      this.setState(week);
-    }
-  }
-  */
 
   findActiveDay(){
     let day;
