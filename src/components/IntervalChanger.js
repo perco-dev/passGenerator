@@ -7,8 +7,6 @@ import Slider, { Range } from 'rc-slider';
 import 'rc-slider/assets/index.css';
 
 class IntervalChanger extends Component {
-  static propTypes = {
-  }
   constructor(props){
     super(props)
     
@@ -72,6 +70,9 @@ class IntervalChanger extends Component {
     )
   }
 
+  /**
+   * Устанавливаем в state текущий объект напр мондай , остальныйе - фальс
+   */
   setActive = ref =>{
     const id = ref.target.id;
     let obj = {...{},...this.state.week};
@@ -145,10 +146,33 @@ class IntervalChanger extends Component {
     }
     if(typeof day !=='undefined'){
       let {intervals} = this.state['week'][`${day}`];
+
+      //Валидация : нельзя добавить два одинаковых типа интервалов кроме промежуточного интервала
+      if(this.state.interval == 0 ) {
+        for (let item of intervals){
+          if (Object.keys(item)[0] == 0) alert('Не возможно добавить два начальеых интервала')
+          return null;
+        }
+      }
+      else if(this.state.interval == 1 ){
+        for (let item of intervals){
+          if(Object.keys(item)[0]==1){
+            alert("Не возможно добавить два конечных интервала"); 
+            return null;
+          }
+        }
+      }
+      else if (this.state.interval == 2){
+        for (let item of intervals){
+          if (Object.keys(item)[0] == 2) alert('Не возможно добавить две полных смены');
+          return null;
+        }
+      }
+      //Следующий ингтервал начинается с конца предыдущего
       let min = null;
       if(intervals.length > 0){
         for(let i=intervals.length-1;i>=0;i--){
-          if(Object.keys(intervals[i])[0] !=2){
+          if(Object.keys(intervals[i])[0] !=1){
             min = intervals[i].end
             break;
           }
@@ -180,6 +204,7 @@ class IntervalChanger extends Component {
     }
   }
 
+  //Устанавливает начальные значения для интервала
   getCurientRangeValues = index =>{
     let day = this.findActiveDay();
     if(day != null){
@@ -194,11 +219,13 @@ class IntervalChanger extends Component {
       }
     }
   }
+
   setHours(value){
     let h = (parseInt(value,10) *5) / 60 < 1 ? 0 : Math.floor((value*5)/60);
     let m = (parseInt(value,10) *5) % 60;
     return `${h}:${m}`
   }
+
   onAfterChange = index => value =>{
     let day = this.findActiveDay();
     if(day !=null){
@@ -209,7 +236,8 @@ class IntervalChanger extends Component {
       this.setState(week);
     }
   }
-
+  
+  /*
   changeRange = index => value => {
     let day = this.findActiveDay();
     if(day!=null){
@@ -220,6 +248,7 @@ class IntervalChanger extends Component {
       this.setState(week);
     }
   }
+  */
 
   findActiveDay(){
     let day;
