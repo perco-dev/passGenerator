@@ -115,68 +115,85 @@ class MontlyIntervalChanger extends Component {
   }
 
   showInputs(){
-    for (let day of Object.keys(this.state.week)){
-      if (this.state.week[`${day}`].active === true){
-        const intervals = this.state.week[`${day}`].intervals;
-        if(intervals.length){
-          return intervals.map(item=>{
-            return <div className='container' key = {item[Object.keys(item)[0]].id}>
-              <div className='row'>
-                <label className='col-4'>{this.type[Object.keys(item)[0]]}</label>
-              </div>
-              <div className='row'>
-                <span class="badge badge-light col-1">{this.getCurientRangeValues(item[Object.keys(item)[0]].id)[0]}</span>
-                <div className='col-8' style={{'margin-top':'7px'}}>
-                  <Range
-                    min = {this.setRangeVlue(item[Object.keys(item)[0]])[0]}
-                    max = {this.setRangeVlue(item[Object.keys(item)[0]])[1]}
-                    onAfterChange = {this.onAfterChange(item[Object.keys(item)[0]].id)} 
-                  />
-                </div>
-                  <span class="badge badge-light col-1">{this.getCurientRangeValues(item[Object.keys(item)[0]].id)[1]}</span>
-                <button className='btn btn-danger btn-sm col-2' onClick={this.deleteInput(item[Object.keys(item)[0]].id)}>Удалить</button>
-              </div>
+    const {week} = this.state;
+    let day = this.findActiveDay();
+    if(day != null){
+      const intervals = week[`${day}`].intervals;
+      return intervals.map(item=>{
+        return <div className='container' key = {item[Object.keys(item)[0]].id}>
+          <div className='row'>
+            <label className='col-4'>{this.type[Object.keys(item)[0]]}</label>
+          </div>
+          <div className='row'>
+            <span class="badge badge-light col-1">{this.getCurientRangeValues(item[Object.keys(item)[0]].id)[0]}</span>
+            <div className='col-8' style={{'margin-top':'7px'}}>
+              <Range
+                min = {this.setRangeVlue(item[Object.keys(item)[0]])[0].begin}
+                max = {this.setRangeVlue(item[Object.keys(item)[0]])[0].end}
+                onAfterChange = {this.onAfterChange(item[Object.keys(item)[0]].id)}
+              />
             </div>
-          })
-        }
-      };
+            <span class="badge badge-light col-1">{this.getCurientRangeValues(item[Object.keys(item)[0]].id)[1]}</span>
+            <button className='btn btn-danger btn-sm col-2' onClick={this.deleteInput(item[Object.keys(item)[0]].id)}>Удалить</button>
+          </div>
+        </div>
+      })
     }
     return null;
   }
 
   addInput = () => {
     let day = this.findActiveDay();
-    console.log(day);
-    if(typeof day !=='undefined' || null){
-      console.log(day);
+    if(typeof day !=='undefined' || day!=null){
       let {intervals} = this.state['week'][`${day}`];
       //Валидация : нельзя добавить два одинаковых типа интервалов кроме промежуточного интервала
-      const type = this.state.interval
-      console.log(intervals,type);
-      if(interval == 0){
-        for (let item of intervals){
-          if (Object.keys(item)[0] == 0) alert('Не возможно добавить два начальеых интервала')
+      const intervalType = this.state.interval;
+
+      //Начальный интервал
+      if(intervalType == 0){
+        if(intervals.length != 0){
+          alert('Начало смены не может начиинаться после интервала');
           return null;
         }
       }
-
-      else if (interval == 3){
-        console.log('333');
+      //Конечный интервал
+      else if(intervalType == 1) {
         let begin = false;
-        for(let item of intervals){
-          if (Object.keys(item)[0] == 0){ begin = true; break}
-        }
-        if(!begin) {alert('Укажите интервал начала смены'); return null};
-      }
-
-      else{
         for (let item of intervals){
-          if (Object.keys(item)[0] == 2 || Object.keys(item)[0] == 1) {
-            alert('Не возможно добавить интервал после полной или конца смены');
+          let type = Object.keys(item)[0];
+          //Если существует конечный или полный
+          if(type == 1 || type == 2){
+            alert("Конец интервала не может быть добавлен после полной смены или продублирован"); 
             return null;
+          }
+          if(type == 0){
+            begin = true
+          }
+        }
+        //Если нет конечного
+        if(!begin){
+          alert('Концу смены должен предшествовать интервал начала смены');
+          return null;
+        }
+      }
+      
+      //Полная смена
+      else if(intervalType == 2){
+        if(intervals.length != 0){
+          alert('Полная смена не может начинаться после интервала');
+          return null;
+        }
+      }
+      
+      else if(intervalType == 3){
+        for(let item of intervals){
+          let type = Object.keys(item)[0];
+          if(type == 1 || type == 2){
+            alert('Не возможно добавить интервал после конца схемы'); return null;
           }
         }
       }
+
       //Следующий ингтервал начинается с конца предыдущего
       let min = null;
       if(intervals.length > 0){
@@ -194,13 +211,20 @@ class MontlyIntervalChanger extends Component {
     }
   }
 
-  deleteInput = (index)=> e =>{
-    for(let d of Object.keys(this.state.week)){
-      if(this.state['week'][`${d}`]['active'] === true){
-        let {intervals} = this.state['week'][`${d}`];
-        if (typeof intervals !== 'undefined'){
-          intervals.splice(index,1);
-          let week = {...this.state.week,...{ [`${d}`] : { active:true,intervals:intervals } } }
+  deleteInput = index => e => {
+    let day = this.findActiveDay();
+    if(day != null){
+      let {intervals} = this.state['week'][`${day}`];
+      if (typeof intervals !== 'undefined'){
+        let elementIndex = null;
+        for (let key of Object.keys(intervals)){
+          if(Object.values(intervals[key])[0].id == index){
+            elementIndex = key;
+          }
+        }
+        if(elementIndex!=null){
+          intervals.splice(elementIndex,1);
+          let week = {...this.state.week,...{ [`${day}`] : { active:true,intervals:intervals } } }
           this.setState(week);
         }
       }
