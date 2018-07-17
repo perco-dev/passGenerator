@@ -127,28 +127,26 @@ class SchiftIntervalChanger extends Component {
     if(typeof day !== 'undefined'){
       const {intervals} = this.state.shift[`${day}`];
       const {setRangeValue} = this.props;
-      if(intervals.length){
-        return intervals.map(item=>{
-          return <div className='col-8' key = {item[Object.keys(item)[0]].id}>
-            <div className='row'>
-              <label className='col-4'>{this.type[Object.keys(item)[0]]}</label>
-            </div>
-            <div className='row'>
-              <span class="badge badge-light col-1">{this.getCurientRangeValues(item[Object.keys(item)[0]].id)[0]}</span>
-              <div className='col-8' style={{'margin-top':'7px'}}>
-                <Range
-                  min = {setRangeValue(item[Object.keys(item)[0]])[0]}
-                  max = {setRangeValue(item[Object.keys(item)[0]])[1]}
-                  step= {1}
-                  onAfterChange = {this.onAfterChange(item[Object.keys(item)[0]].id)} 
-                />
-              </div>
-              <span class="badge badge-light col-1">{this.getCurientRangeValues(item[Object.keys(item)[0]].id)[1]}</span>
-              <button className='btn btn-danger btn-sm col-2' onClick={this.deleteInput(item[Object.keys(item)[0]].id)}>Удалить</button>
-            </div>
+      return intervals.map(item=>{
+        return <div className='col-8' key = {item[Object.keys(item)[0]].id}>
+          <div className='row'>
+            <label className='col-4'>{this.type[Object.keys(item)[0]]}</label>
           </div>
-        })
-      }
+          <div className='row'>
+            <span class="badge badge-light col-1">{this.getCurientRangeValues(item[Object.keys(item)[0]].id)[0]}</span>
+            <div className='col-8' style={{'margin-top':'7px'}}>
+              <Range
+                min = {setRangeValue(item[Object.keys(item)[0]])[0].begin}
+                max = {setRangeValue(item[Object.keys(item)[0]])[0].end}
+                step= {1}
+                onAfterChange = {this.onAfterChange(item[Object.keys(item)[0]].id)} 
+              />
+            </div>
+            <span class="badge badge-light col-1">{this.getCurientRangeValues(item[Object.keys(item)[0]].id)[1]}</span>
+            <button className='btn btn-danger btn-sm col-2' onClick={this.deleteInput(item[Object.keys(item)[0]].id)}>Удалить</button>
+          </div>
+        </div>
+      })
     };
     return null;
   }
@@ -213,13 +211,20 @@ class SchiftIntervalChanger extends Component {
     }
   }
 
-  deleteInput = (index)=> e =>{
-    for(let d of Object.keys(this.state.shift)){
-      if(this.state['shift'][`${d}`]['active'] === true){
-        let {intervals} = this.state['shift'][`${d}`];
-        if (typeof intervals !== 'undefined'){
-          intervals.splice(index,1);
-          let shift = {...this.state.shift,...{ [`${d}`] : { active:true,intervals:intervals } } }
+  deleteInput = index => e => {
+    let day = this.findActiveDay();
+    if(day != null){
+      let {intervals} = this.state['shift'][`${day}`];
+      if (typeof intervals !== 'undefined'){
+        let elementIndex = null;
+        for (let key of Object.keys(intervals)){
+          if(Object.values(intervals[key])[0].id == index){
+            elementIndex = key;
+          }
+        }
+        if(elementIndex!=null){
+          intervals.splice(elementIndex,1);
+          let shift = {...this.state.shift,...{ [`${day}`] : { active:true,intervals:intervals } } }
           this.setState(shift);
         }
       }
