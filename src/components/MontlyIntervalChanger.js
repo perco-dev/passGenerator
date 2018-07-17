@@ -152,24 +152,30 @@ class MontlyIntervalChanger extends Component {
       let {intervals} = this.state['week'][`${day}`];
 
       //Валидация : нельзя добавить два одинаковых типа интервалов кроме промежуточного интервала
-      if(this.state.interval == 0 ) {
+      const {interval} = this.state.interval
+      
+      if(interval == 0 ) {
         for (let item of intervals){
           if (Object.keys(item)[0] == 0) alert('Не возможно добавить два начальеых интервала')
           return null;
         }
       }
-      else if(this.state.interval == 1 ){
+
+      else if (interval == 3){
+        console.log('333');
+        let begin = false;
+        for(let item of intervals){
+          if (Object.keys(item)[0] == 0){ begin = true; break}
+        }
+        if(!begin) {alert('Укажите интервал начала смены'); return null};
+      }
+
+      else{
         for (let item of intervals){
-          if(Object.keys(item)[0]==1){
-            alert("Не возможно добавить два конечных интервала"); 
+          if (Object.keys(item)[0] == 2 || Object.keys(item)[0] == 1) {
+            alert('Не возможно добавить интервал после полной или конца смены');
             return null;
           }
-        }
-      }
-      else if (this.state.interval == 2){
-        for (let item of intervals){
-          if (Object.keys(item)[0] == 2) alert('Не возможно добавить две полных смены');
-          return null;
         }
       }
       //Следующий ингтервал начинается с конца предыдущего

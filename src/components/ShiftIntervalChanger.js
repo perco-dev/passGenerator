@@ -32,21 +32,18 @@ class SchiftIntervalChanger extends Component {
   render() {
     //console.log("!!!",this.state);
     return (
-      <div className='container-fluid'>
-        <label>Дни</label>
         <section className='rangeSlider'>
+          <label>Дни</label>
+          <div className='row' style={{'margin-bottom':'5px'}}>
+            <div className='col-1'>
+              <button className="btn btn-success btn-block" onClick={this.addDay}>+</button>
+            </div>
+            <div className='col-1'>
+              <button className="btn btn-danger btn-block" onClick={this.deleteDay}>-</button>
+            </div>
+          </div>
           <div className='row'>
-            <div className='col-md-1'>
-              <div className='row'>
-                <button className="btn btn-success btn-block" onClick={this.addDay}>+</button>
-              </div>
-              <div className='row' style={{'margin-top':'5px'}}>
-                <button className="btn btn-danger btn-block" onClick={this.deleteDay}>-</button>
-              </div>
-            </div>
-            <div className='col-md-10'>
-              {this.showDays()}
-            </div>
+            {this.showDays()}
           </div>
           <div className='intervals row'>
             {this.showSlider()}
@@ -55,25 +52,24 @@ class SchiftIntervalChanger extends Component {
             {this.showInputs()}
           </div>
         </section>
-      </div>
     )
   }
   
   showDays(){
     let {shift} = this.state;
-    const days = Object.keys(shift).map(day=><li className='nav-item col-2'>
+    const days = Object.keys(shift).map(day=><li className='nav-item col-2' >
         <a  className={shift[`${day}`]['active'] ? "nav-link active" : "nav-link"} 
             href="#" 
             key={day.toString()}
             id = {day.toString()}
             onClick = {this.setActive}
             ref = {this.setRef}
-            style = {{'text-align':'center'}}
+            style = {{'text-align':'center','border':'1px solid #3385ff'}}
         >
         {"день " + day.toString().substr(3)}
         </a>
       </li>);
-    return <ul className='nav nav-pills'>{days}</ul>
+    return <ul className='nav nav-pills col-12'>{days}</ul>
   }
 
   addDay = () => {
@@ -87,7 +83,10 @@ class SchiftIntervalChanger extends Component {
   deleteDay = () =>{
     const {shift} = this.state;
     let lastIndex = Object.keys(shift).length;
-    if(lastIndex >1 && delete shift['day' + `${lastIndex}`]){
+    if(lastIndex > 1 && delete shift['day' + `${lastIndex}`]){
+      for(let i = 1;i<lastIndex;++i){
+        shift['day' + `${i}`]['active'] = false;
+      } 
       shift['day' + `${lastIndex - 1}`]['active'] = true;
       this.setState({...this.state,...shift});
     }
@@ -96,7 +95,6 @@ class SchiftIntervalChanger extends Component {
   setActive = ref =>{
     const id = ref.target.id;
     let {shift} = this.state;
-    let {active} = this.state['shift'][`${id}`];
     if((Object.keys(shift)).length != 1){
       for (let key of Object.keys(shift)){
         if (key == id){
@@ -111,7 +109,7 @@ class SchiftIntervalChanger extends Component {
   }
 
   showSlider(){
-    return <div className="input-group" style={{'margin-top':'15px'}}>
+    return <div className="input-group col-8" style={{'margin-top':'15px'}}>
         <div clasNames="input-group-prepend">
           <button className="btn btn-outline" type="button" onClick = {this.addInput}>Добавить интервал</button>
         </div>

@@ -17,7 +17,6 @@ export default Interval => connect(state=>({schedule:state.schedule}),{changeSch
 
   }
   render(){
-    console.log('----',this.state);
     return <Interval  {...this.state} 
                       {...this.props} 
                       setHours = {this.setHours}
