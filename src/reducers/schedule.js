@@ -4,7 +4,7 @@ let now = `${date.getFullYear()}-${date.getMonth() < 9 ? '0'+ (date.getMonth() +
 const initialScheduleState = {
   beginDate: `${now}`,
   endDate:`${now}`,
-  scheduleType:'Недельный',
+  scheduleType:'Сменный',
   hours:1,
   name:null,
   allow_coming_later:null,
@@ -13,7 +13,6 @@ const initialScheduleState = {
   undertime:null,
   is_not_holiday:null,
   is_first_input_last_output:null,
-  begin_date:`${now}`,
   access_zones:[],
   no_access_zones:[],
   intervals:[]

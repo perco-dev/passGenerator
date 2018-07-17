@@ -3,7 +3,8 @@ import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
 import { changeScheduleValue } from '../AC';
 import { findDOMNode } from 'react-dom';
-import IntervalChanger from './IntervalChanger';
+import MontlyIntervalChanger from './MontlyIntervalChanger';
+import SchiftIntervalChanger from './ShiftIntervalChanger';
 
 class AutoGenerator extends Component {
   
@@ -28,7 +29,7 @@ class AutoGenerator extends Component {
             <label>Тип графика</label>
             <select className='form-control' onChange = {this.changeValue('scheduleType')}>
               <option value='Недельный'>Недельный</option>
-              <option value='Сменный'>Сменный</option>
+              <option value='Сменный' selected>Сменный</option>
               <option value='По присутствию'>По присутствию</option>
             </select>
           </div>
@@ -87,16 +88,47 @@ class AutoGenerator extends Component {
               <input type='checkbox' className='form-control col-1' onChange={this.changeValue('is_first_input_last_output')}/>
             </div>
             <div className = 'form-group col-md-8'> 
-              <IntervalChanger/>
+              <MontlyIntervalChanger/>
             </div>
-          </div>
-
-          <div className='form-row'>
-  
           </div>
         </div>
       }
-      case 'Сменный' :          return <p>сменный</p>
+      case 'Сменный' : {
+        return <div style={{'margin-top':'10px'}}>
+          <div className='form-row'>
+            <div className='form-group col-md-3'>
+              <label>Приходить позже</label>
+              <input type='time' className = 'form-control' onChange = {this.changeValue('allow_coming_later')}/>
+            </div>
+            <div className='form-group col-md-3'>
+              <label>Уходить раньше</label>
+              <input type='time' className = 'form-control' onChange = {this.changeValue('allow_leaving_before')}/>
+            </div>
+            <div className='form-group col-md-3'>
+              <label>Переработка</label>
+              <input type='time' className = 'form-control' onChange = {this.changeValue('overtime')}/>
+            </div>
+            <div className='form-group col-md-3'>
+              <label>Недоработка</label>
+              <input type='time' className = 'form-control' onChange = {this.changeValue('undertime')}/>
+            </div>
+          </div>
+          <div className='form-row'>
+            <div className='form-group col-md-3'>
+              <label>Название графика</label>
+              <input type='text' className = 'form-control' onChange = {this.changeValue('name')}/>
+            </div>
+            <div className = 'col-md-3'>
+              <label >ПервоНах</label>
+              <input type='checkbox' className='form-control col-1' onChange={this.changeValue('is_first_input_last_output')}/>
+            </div>
+            <div className = 'form-group col-md-12'> 
+              <SchiftIntervalChanger/>
+            </div>
+          </div>
+        </div>
+      }
+      
       case 'По присутствию' :   return <p>по присутствию</p>
       default: return <p>!!!</p>
     }
