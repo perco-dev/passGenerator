@@ -36,6 +36,7 @@ class MontlyIntervalChanger extends Component {
   }
   
   render() {
+    console.log(this.state);
     return (
       <div>
         <label>Интервалы</label>
@@ -144,17 +145,15 @@ class MontlyIntervalChanger extends Component {
   }
 
   addInput = () => {
-    let day;
-    for(let d of Object.keys(this.state.week)){
-      if(this.state['week'][`${d}`]['active'] === true) day = d;
-    }
-    if(typeof day !=='undefined'){
+    let day = this.findActiveDay();
+    console.log(day);
+    if(typeof day !=='undefined' || null){
+      console.log(day);
       let {intervals} = this.state['week'][`${day}`];
-
       //Валидация : нельзя добавить два одинаковых типа интервалов кроме промежуточного интервала
-      const {interval} = this.state.interval
-      
-      if(interval == 0 ) {
+      const type = this.state.interval
+      console.log(intervals,type);
+      if(interval == 0){
         for (let item of intervals){
           if (Object.keys(item)[0] == 0) alert('Не возможно добавить два начальеых интервала')
           return null;
@@ -243,9 +242,9 @@ class MontlyIntervalChanger extends Component {
   }
 
   findActiveDay(){
-    let day;
-    for(let d of Object.keys(this.state.week)){
-      if(this.state['week'][`${d}`]['active'] === true) day = d;
+    let {week} = this.state;
+    for(let d of Object.keys(week)){
+      if(week[`${d}`].active === true)
       return d;
     }
     return null;
