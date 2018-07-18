@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
-import { changeScheduleValue } from '../AC';
+import { changeScheduleValueSimple,changeScheduleValueComplex} from '../AC';
 import { findDOMNode } from 'react-dom';
 import MontlyIntervalChanger from './MontlyIntervalChanger';
 import SchiftIntervalChanger from './ShiftIntervalChanger';
@@ -13,7 +13,7 @@ class AutoGenerator extends Component {
   }
 
   render() {
-    //console.log(this.props)
+    console.log("!!!",this.props)
     return(
       <form>
         <div className = 'form-row'>
@@ -44,11 +44,19 @@ class AutoGenerator extends Component {
     )
   }
 
-  changeValue = field => e =>{
+  changeValue = (field,option) => e =>{
     let obj = {}
-    obj[field] = e.target.value;
-    const {changeScheduleValue} = this.props;
-    changeScheduleValue(obj);
+    const {changeScheduleValueSimple} = this.props;
+    const {changeScheduleValueComplex} = this.props;
+    if(typeof option === 'undefined'){
+      obj[field] = e.target.value;
+      changeScheduleValueSimple(obj);
+    }
+    else{
+      obj[field] = { [`${option}`] : e.target.value};
+      //obj['test'] = {test:'13343',tust:true,trust:{tr:'123'}}
+      changeScheduleValueComplex(obj)
+    }
   }
 
   showScheduleConfig(){
@@ -57,22 +65,55 @@ class AutoGenerator extends Component {
       case 'Недельный' : {
         return <div style={{'margin-top':'10px'}}>
           <div className='form-row'>
+
             <div className='form-group col-md-3'>
               <label>Приходить позже</label>
-              <input type='time' className = 'form-control' onChange = {this.changeValue('allow_coming_later')}/>
+              <div className='row'>
+                <div className = 'col-4'>
+                  <input type='number' className = 'form-control' onChange = {this.changeValue('allow_coming_later','h')}/>
+                </div>
+                <div className = 'col-4'>
+                  <input type='number' className = 'form-control' onChange = {this.changeValue('allow_coming_later','m')}/>
+                </div>
+              </div>
             </div>
+
             <div className='form-group col-md-3'>
               <label>Уходить раньше</label>
-              <input type='time' className = 'form-control' onChange = {this.changeValue('allow_leaving_before')}/>
+              <div className = 'row'> 
+                <div className='col-4'>
+                  <input type='number' className = 'form-control' onChange = {this.changeValue('allow_leaving_before','h')}/>
+                </div>
+                <div className='col-4'>
+                  <input type='number' className = 'form-control' onChange = {this.changeValue('allow_leaving_before','m')}/>
+                </div>
+              </div>
             </div>
+
             <div className='form-group col-md-3'>
               <label>Переработка</label>
-              <input type='time' className = 'form-control' onChange = {this.changeValue('overtime')}/>
+              <div className='row'>
+                <div className='col-4'>
+                  <input type='number' className = 'form-control' onChange = {this.changeValue('overtime','h')}/>
+                </div>
+                <div className='col-4'>
+                  <input type='number' className = 'form-control' onChange = {this.changeValue('overtime','m')}/>
+                </div>
+              </div>
             </div>
+            
             <div className='form-group col-md-3'>
               <label>Недоработка</label>
-              <input type='time' className = 'form-control' onChange = {this.changeValue('undertime')}/>
+              <div className='row'>
+                <div className='col-4'>
+                  <input type='number' min='0' max='24'  className = 'form-control' onChange = {this.changeValue('undertime','h')}/>
+                </div>:
+                <div className='col-4'>
+                  <input type='number' min='0' max='60' className = 'form-control' onChange = {this.changeValue('undertime','m')}/>
+                </div>
+              </div>
             </div>
+
           </div>
           <div className='form-row'>
             <div className='form-group col-md-3'>
@@ -96,22 +137,27 @@ class AutoGenerator extends Component {
       case 'Сменный' : {
         return <div style={{'margin-top':'10px'}}>
           <div className='form-row'>
+
             <div className='form-group col-md-3'>
               <label>Приходить позже</label>
               <input type='time' className = 'form-control' onChange = {this.changeValue('allow_coming_later')}/>
             </div>
+          
             <div className='form-group col-md-3'>
               <label>Уходить раньше</label>
               <input type='time' className = 'form-control' onChange = {this.changeValue('allow_leaving_before')}/>
             </div>
+          
             <div className='form-group col-md-3'>
               <label>Переработка</label>
               <input type='time' className = 'form-control' onChange = {this.changeValue('overtime')}/>
             </div>
+          
             <div className='form-group col-md-3'>
               <label>Недоработка</label>
               <input type='time' className = 'form-control' onChange = {this.changeValue('undertime')}/>
             </div>
+          
           </div>
           <div className='form-row'>
             <div className='form-group col-md-3'>
@@ -139,4 +185,4 @@ class AutoGenerator extends Component {
 
 };
 
-export default connect(state=>({schedule:state.schedule}),{changeScheduleValue})(AutoGenerator);
+export default connect(state=>({schedule:state.schedule}),{changeScheduleValueSimple,changeScheduleValueComplex})(AutoGenerator);

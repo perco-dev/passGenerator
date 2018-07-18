@@ -5,9 +5,15 @@ export function changeSectionType(type){
   }
 }
 
-export function changeScheduleValue(value){
+export function changeScheduleValueSimple(value){
   return{
-    type:'SCHEDULE_CHANGE',
+    type:'SCHEDULE_CHANGE_SIMPLE_PROPERTY',
+    payload:value
+  }
+}
+export function changeScheduleValueComplex(value){
+  return{
+    type: 'SCHEDULE_CHANGE_COMPLEX_PROPERTY',
     payload:value
   }
 }
