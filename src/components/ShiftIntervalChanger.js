@@ -136,8 +136,8 @@ class SchiftIntervalChanger extends Component {
             <span class="badge badge-light col-1">{this.getCurientRangeValues(item[Object.keys(item)[0]].id)[0]}</span>
             <div className='col-8' style={{'margin-top':'7px'}}>
               <Range
-                min = {setRangeValue(item[Object.keys(item)[0]])[0].begin}
-                max = {setRangeValue(item[Object.keys(item)[0]])[0].end}
+                min = {setRangeValue(item[Object.keys(item)[0]])[0]}
+                max = {setRangeValue(item[Object.keys(item)[0]])[1]}
                 step= {1}
                 onAfterChange = {this.onAfterChange(item[Object.keys(item)[0]].id)} 
               />

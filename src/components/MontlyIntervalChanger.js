@@ -128,9 +128,9 @@ class MontlyIntervalChanger extends Component {
             <span class="badge badge-light col-1">{this.getCurientRangeValues(item[Object.keys(item)[0]].id)[0]}</span>
             <div className='col-8' style={{'margin-top':'7px'}}>
               <Range
-                min = {this.setRangeVlue(item[Object.keys(item)[0]])[0].begin}
-                max = {this.setRangeVlue(item[Object.keys(item)[0]])[0].end}
-                onAfterChange = {this.onAfterChange(item[Object.keys(item)[0]].id)}
+                min = {this.setRangeValue(item[Object.keys(item)[0]])[0]}
+                max = {this.setRangeValue(item[Object.keys(item)[0]])[1]}
+                onChange = {this.onRangeChange(item[Object.keys(item)[0]].id)}
               />
             </div>
             <span class="badge badge-light col-1">{this.getCurientRangeValues(item[Object.keys(item)[0]].id)[1]}</span>
@@ -230,8 +230,12 @@ class MontlyIntervalChanger extends Component {
       }
     }
   }
-
-  setRangeVlue = intervalValue =>{
+  
+  /**
+   * intervalValue - object {bigin,end}
+   * return array
+   */
+  setRangeValue = intervalValue =>{
     if(typeof intervalValue !== 'undefined'){
       return [intervalValue.begin,intervalValue.end]
     }
@@ -239,22 +243,24 @@ class MontlyIntervalChanger extends Component {
 
   //Устанавливает начальные значения для интервала
   getCurientRangeValues = index =>{
+    console.log(index);
     let day = this.findActiveDay();
     let {setHours} = this.props;
     if(day != null){
       let {intervals} = this.state.week[`${day}`]
-      if(typeof intervals[index] !== 'undefined' && typeof intervals[index].begin != 'undefined'){
-        let begin = setHours(intervals[index].begin);
-        let end   = setHours(intervals[index].end);
+      if(typeof intervals[index] !== 'undefined'){
+        let begin = typeof intervals[index].begin === 'undefined' ? '00:30' : setHours(intervals[index].begin);
+        let end = typeof intervals[index].end  === 'undefined' ? '23:30' : setHours(intervals[index].end)
         return [begin,end]
       }
+
       else{
         return ['00:30','23:30']
       }
     }
   }
 
-  onAfterChange = index => value =>{
+  onRangeChange = index => value =>{
     let day = this.findActiveDay();
     if(day !=null){
       let {intervals} = this.state['week'][`${day}`];

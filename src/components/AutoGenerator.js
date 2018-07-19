@@ -70,10 +70,10 @@ class AutoGenerator extends Component {
               <label>Приходить позже</label>
               <div className='row'>
                 <div className = 'col-4'>
-                  <input type='number' className = 'form-control' onChange = {this.changeValue('allow_coming_later','h')}/>
+                  <input type='number' min='0' max='24' className = 'form-control' onChange = {this.changeValue('allow_coming_later','h')}/>
                 </div>
                 <div className = 'col-4'>
-                  <input type='number' className = 'form-control' onChange = {this.changeValue('allow_coming_later','m')}/>
+                  <input type='number' min='0' max='60' className = 'form-control' onChange = {this.changeValue('allow_coming_later','m')}/>
                 </div>
               </div>
             </div>
@@ -82,10 +82,10 @@ class AutoGenerator extends Component {
               <label>Уходить раньше</label>
               <div className = 'row'> 
                 <div className='col-4'>
-                  <input type='number' className = 'form-control' onChange = {this.changeValue('allow_leaving_before','h')}/>
+                  <input type='number' min='0' max='24' className = 'form-control' onChange = {this.changeValue('allow_leaving_before','h')}/>
                 </div>
                 <div className='col-4'>
-                  <input type='number' className = 'form-control' onChange = {this.changeValue('allow_leaving_before','m')}/>
+                  <input type='number' min='0' max='60' className = 'form-control' onChange = {this.changeValue('allow_leaving_before','m')}/>
                 </div>
               </div>
             </div>
@@ -94,10 +94,10 @@ class AutoGenerator extends Component {
               <label>Переработка</label>
               <div className='row'>
                 <div className='col-4'>
-                  <input type='number' className = 'form-control' onChange = {this.changeValue('overtime','h')}/>
+                  <input type='number' min='0' max='24' className = 'form-control' onChange = {this.changeValue('overtime','h')}/>
                 </div>
                 <div className='col-4'>
-                  <input type='number' className = 'form-control' onChange = {this.changeValue('overtime','m')}/>
+                  <input type='number' min='0' max='60' className = 'form-control' onChange = {this.changeValue('overtime','m')}/>
                 </div>
               </div>
             </div>
