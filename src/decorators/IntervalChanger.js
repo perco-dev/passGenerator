@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
-import {changeScheduleValue} from '../AC';
+import {changeScheduleValueComplex} from '../AC';
 import {connect} from 'react-redux';
 
-export default Interval => connect(state=>({schedule:state.schedule}),{changeScheduleValue})(class IntervalChanger extends Component{
+export default Interval => connect(state=>({schedule:state.schedule}),{changeScheduleValueComplex})(class IntervalChanger extends Component{
   constructor(props){
     super(props)
     

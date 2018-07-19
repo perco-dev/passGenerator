@@ -15,7 +15,7 @@ const initialScheduleState = {
   is_first_input_last_output:null,
   access_zones:[],
   no_access_zones:[],
-  intervals:[]
+  intervals:{}
 }
 
 export default (schedule = initialScheduleState,action)=>{

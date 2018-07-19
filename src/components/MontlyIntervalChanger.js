@@ -13,7 +13,7 @@ class MontlyIntervalChanger extends Component {
     //from store
     schedule: PropTypes.object.isRequired,
     type:PropTypes.object.isRequired,
-    changeScheduleValue:PropTypes.func.isRequired
+    changeScheduleValueComplex:PropTypes.func.isRequired
   }
 
   constructor(props){
@@ -36,7 +36,6 @@ class MontlyIntervalChanger extends Component {
   }
   
   render() {
-    console.log(this.state);
     return (
       <div>
         <label>Интервалы</label>
@@ -110,6 +109,7 @@ class MontlyIntervalChanger extends Component {
           <option value="2">Полная смена</option>
           <option value="3">Промежуточный интервал</option>
         </select>
+        <button type='button' className = 'btn btn-success'  style={{'margin-left':'50px'}}onClick={this.sentSchedule}>записать интервалы</button>
       </div>
     </div>
   }
@@ -243,7 +243,6 @@ class MontlyIntervalChanger extends Component {
 
   //Устанавливает начальные значения для интервала
   getCurientRangeValues = index =>{
-    console.log(index);
     let day = this.findActiveDay();
     let {setHours} = this.props;
     if(day != null){
@@ -278,6 +277,12 @@ class MontlyIntervalChanger extends Component {
       return d;
     }
     return null;
+  }
+
+  sentSchedule = () =>{
+    const {changeScheduleValueComplex} = this.props;
+    const intervals = {intervals:this.state.week};
+    changeScheduleValueComplex(intervals);
   }
 };
 

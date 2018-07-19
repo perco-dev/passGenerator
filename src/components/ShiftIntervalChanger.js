@@ -119,6 +119,7 @@ class SchiftIntervalChanger extends Component {
           <option value="2">Полная смена</option>
           <option value="3">Промежуточный интервал</option>
         </select>
+        <button type='button' className = 'btn btn-success'  style={{'margin-left':'50px'}}onClick={this.sentSchedule}>записать интервалы</button>
       </div>
   }
 
@@ -255,6 +256,12 @@ class SchiftIntervalChanger extends Component {
   
   setRef = ref =>{
     return findDOMNode(ref); 
+  }
+  
+  sentSchedule = () =>{
+    const {changeScheduleValueComplex} = this.props;
+    const intervals = {intervals:this.state.shift};
+    changeScheduleValueComplex(intervals);
   }
 };
 

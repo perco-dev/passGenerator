@@ -13,9 +13,8 @@ class AutoGenerator extends Component {
   }
 
   render() {
-    console.log("!!!",this.props)
     return(
-      <form>
+      <form onSubmit = {this.onSubmit}>
         <div className = 'form-row'>
           <div className="form-group col-md-3">
             <label>Дата начала генерации</label>
@@ -39,7 +38,8 @@ class AutoGenerator extends Component {
           </div>
         </div>
         <hr style = {{'border': 'none','background-color':'rgb(230, 230, 230)','color': 'red','height': '2px'}}/>
-        {this.showScheduleConfig()}
+          {this.showScheduleConfig()}
+          <button type='submit' className='btn btn-primary'>Загенерировать</button>
       </form>
     )
   }
@@ -183,6 +183,9 @@ class AutoGenerator extends Component {
     return findDOMNode(ref)
   }
 
+  onSubmit = async () => {
+    console.log(this.props);
+  }
 };
 
 export default connect(state=>({schedule:state.schedule}),{changeScheduleValueSimple,changeScheduleValueComplex})(AutoGenerator);
