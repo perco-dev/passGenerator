@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import {changeScheduleValueComplex} from '../AC';
+import Modal from 'react-responsive-modal';
 import {connect} from 'react-redux';
 
 export default Interval => connect(state=>({schedule:state.schedule}),{changeScheduleValueComplex})(class IntervalChanger extends Component{
@@ -35,5 +36,4 @@ export default Interval => connect(state=>({schedule:state.schedule}),{changeSch
       return [intervalValue.begin,intervalValue.end]
     }
   }
-
 })

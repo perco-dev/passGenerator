@@ -17,3 +17,10 @@ export function changeScheduleValueComplex(value){
     payload:value
   }
 }
+
+export function addMsgToTerminal(value){
+  return {
+    type: 'MESSAGE',
+    payload: value
+  }
+}

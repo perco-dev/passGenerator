@@ -9,144 +9,136 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 require("unfetch/polyfill");
-const depend = require("../../lib/api/dependencies");
+const depend = require("./dependencies");
 const prepare = require("./boots");
-const React = require("react");
-const ReactDom = require("react-dom");
-const Terminal_1 = require("../../components/Terminal");
+const headers = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
 const host = 'http://localhost:8080/api';
-let headers = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
-let depencies = depend.default;
-/** Авто генератор проходов
- *
- * @param begin
- * @param end
- * @param shift
- * @param hours
- */
-/**функция отображения сообщений в компоненте
- * props(string) сообщение
- * arr(array) массив сообщений
- */
-function renderComp(props, arr) {
-    return __awaiter(this, void 0, void 0, function* () {
-        arr.push(props);
-        ReactDom.render(React.createElement(Terminal_1.default, { text: arr }), document.getElementById('terminal'));
-    });
-}
-function autoGenerator(begin, end, shift, hours) {
-    return __awaiter(this, void 0, void 0, function* () {
-        //массив сообщений
-        let arr = [];
-        //Проверка дат
-        if (begin.split('-').length != 3 || end.split('-').length != 3) {
-            return Promise.reject("Не указана дата начала или дата конца генерации");
-        }
-        //айдишники возвращенные API методом
-        let idsMap = new Map();
-        //Ищем зависимые методы
-        try {
-            // формируем мап всех зависимых методов вида метод => данные
-            var willReplacedByIdsDep = new Map(prepare.bootstrap("sysserver/addDeviceEvent").buildDepMap());
-            yield renderComp("сформированы зависимые методы", arr);
-        }
-        catch (e) {
-            return Promise.reject(`${e}`);
-        }
-        /**
-         * ДОБАВЛЕНИЕ ДАННЫХ ИЗ lib/api/dependecies
-         */
-        //Добавляем начальные и конечные даты для users/staff
-        willReplacedByIdsDep.get('users/staff')[0].body.hiring_date = begin;
-        willReplacedByIdsDep.get('users/staff')[0].body.identifier[0].begin_datetime = begin;
-        willReplacedByIdsDep.get('users/staff')[0].body.identifier[0].end_datetime = end;
-        //перебираем каждый метод в зависимости
-        for (let item of willReplacedByIdsDep.keys()) {
-            if (item === "sysserver/addDeviceEvent")
-                continue;
-            //для подстановки id в название метода например POST /devices/{id}/activate
-            let methodString = Array.from(item.split("/"));
-            if (methodString.length > 1) {
-                if (typeof idsMap.get(methodString[0]) !== 'undefined') {
-                    methodString[1] = idsMap.get(methodString[0]);
-                    methodString = methodString.join("/");
-                }
-                else {
-                    methodString = null;
-                }
+class Launcher {
+    constructor(store) {
+        this.idsMap = new Map();
+        this.dependencies = depend.default;
+        this.begin = store.beginDate;
+        this.end = store.endDate;
+    }
+    //Валидация начала и конца генерации
+    checkDates() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.begin.split('-').length != 3 || this.end.split('-').length != 3) {
+                return Promise.reject({ error: 'Не указана дата начала или конца генерации' });
             }
             else {
-                methodString = null;
+                return Promise.resolve({ msg: "все хорошо" });
             }
-            //Добавляем ключ - название метода в map для хранения айдишников
-            idsMap.set(item, []);
-            //массив значений fields из 
-            let fds = willReplacedByIdsDep.get(item);
-            //перебираем данные для метода
-            for (let fd = 0; fd < fds.length; fd++) {
-                //формируем тело запроса
-                let bodyData = typeof fds[fd].body === 'undefined' ? {} : fds[fd].body;
-                //параметры запроса
-                let query = typeof fds[fd].query === 'undefined' ? "" : "&" + queryParse(fds[fd].query);
-                //Метод POST || PUT
-                let method = typeof depencies[`${item}`].method === 'undefined' ? "PUT" : depencies[`${item}`].method;
-                //выполняем запрос
-                try {
-                    var id = yield asyncFetch(item, query, bodyData, methodString, method);
-                    renderComp(`метод ${item} завершен успешно`, arr);
-                }
-                catch (e) {
-                    return Promise.reject(`${e}`);
-                }
-                //если в респонсе есть айди добавляем его в idsMap и вставляем значение в зависимости
-                if (typeof id != 'undefined' && id != 0) {
-                    idsMap.get(item).push(id);
-                    prepare.bootstrap(item).idSearcher(idsMap, willReplacedByIdsDep);
+        });
+    }
+    //Формирование списка зависимых методов для метода
+    dependenciesListForming() {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                this.willReplacedByIdsDep = new Map(prepare.bootstrap("sysserver/addDeviceEvent").buildDepMap());
+            }
+            catch (e) {
+                return Promise.reject({ error: `${e}` });
+            }
+            return Promise.resolve({ msg: 'сформированы зависимые методы' });
+        });
+    }
+    //Добавление данных для зависимых методов
+    addMethodsData() {
+        return __awaiter(this, void 0, void 0, function* () {
+            //Список зависимых методов
+            let methodsComplete = [];
+            try {
+                //Данные для идентификатора
+                this.willReplacedByIdsDep.get('users/staff')[0].body.hiring_date = this.begin;
+                this.willReplacedByIdsDep.get('users/staff')[0].body.identifier[0].begin_datetime = this.begin;
+                this.willReplacedByIdsDep.get('users/staff')[0].body.identifier[0].end_datetime = this.end;
+                //перебираем методы
+                for (let item of this.willReplacedByIdsDep.keys()) {
+                    if (item === "sysserver/addDeviceEvent")
+                        continue;
+                    //для подстановки id в название метода например POST /devices/{id}/activate
+                    let methodString = Array.from(item.split("/"));
+                    if (methodString.length > 1) {
+                        if (typeof this.idsMap.get(methodString[0]) !== 'undefined') {
+                            methodString[1] = this.idsMap.get(methodString[0]);
+                            methodString = methodString.join("/");
+                        }
+                        else {
+                            methodString = null;
+                        }
+                    }
+                    else {
+                        methodString = null;
+                    }
+                    //Добавляем ключ - название метода в map для хранения айдишников
+                    this.idsMap.set(item, []);
+                    //массив значений fields из значений данных метода 
+                    let fds = this.willReplacedByIdsDep.get(item);
+                    //перебираем данные для метода
+                    for (let fd = 0; fd < fds.length; fd++) {
+                        //формируем тело запроса
+                        let bodyData = typeof fds[fd].body === 'undefined' ? {} : fds[fd].body;
+                        //параметры запроса
+                        let query = typeof fds[fd].query === 'undefined' ? "" : "&" + queryParse(fds[fd].query);
+                        //Метод POST || PUT
+                        let method = typeof this.dependencies[`${item}`].method === 'undefined' ? "PUT" : this.dependencies[`${item}`].method;
+                        //выполняем запрос
+                        var id = yield asyncFetch(item, query, bodyData, methodString, method);
+                        methodsComplete.push(item);
+                    }
+                    //если в респонсе есть айди добавляем его в idsMap и вставляем значение в зависимости
+                    if (typeof id != 'undefined' && id != 0) {
+                        this.idsMap.get(item).push(id);
+                        prepare.bootstrap(item).idSearcher(this.idsMap, this.willReplacedByIdsDep);
+                        methodsComplete.push(item);
+                    }
                 }
             }
-        }
-        /**
-         * УДАЛЕНИЕ ДАННЫХ ИЗ БАЗЫ ПОСЛЕ ГЕНЕРАЦИИ
-         */
-        //Детачим контроллер
-        yield asyncFetch(`devices/${idsMap.get('devices')[0]}/detach`, "", null, null, "POST").catch((error) => __awaiter(this, void 0, void 0, function* () {
-            yield renderComp(error, arr);
-        }));
-        yield renderComp("Контроллер отвязан от помещения", arr);
-        yield deleteDependencies(idsMap, arr);
-    });
+            catch (e) {
+                return Promise.reject({ error: `${e}` });
+            }
+            return Promise.resolve({ msg: `методы ${methodsComplete} завершены успешно` });
+        });
+    }
+    //Удаляем данные из БД + детачим контроллер
+    deleteDatafromDB() {
+        return __awaiter(this, void 0, void 0, function* () {
+            let methodsComplete = [];
+            try {
+                yield asyncFetch(`devices/${this.idsMap.get('devices')[0]}/detach`, "", null, null, "POST");
+                methodsComplete = yield deleteDependencies(this.idsMap);
+                console.log("delete", methodsComplete);
+            }
+            catch (e) {
+                return Promise.reject({ error: `${e}` });
+            }
+            return Promise.resolve({ msg: `методы ${methodsComplete} завершены успешно , \nудалите юзера и подразделение самостоятельно !!!` });
+        });
+    }
 }
-exports.autoGenerator = autoGenerator;
 /**
- *
  * @param ids массив типа метод - id
  * возвращает void
  */
-function deleteDependencies(ids, arr) {
+function deleteDependencies(ids) {
     return __awaiter(this, void 0, void 0, function* () {
+        let methodsComplete = [];
+        console.log('---', ids);
         for (let item of ids.keys()) {
-            if (item == 'divisions' || 'users/staff') {
-                yield renderComp('удалите юзера и подразделение самостоятельно !!!', arr);
-                continue;
-            }
-            for (let key in ids.get(item)) {
-                let res = yield asyncFetch(item, "", null, `${item}/${ids.get(item)[key]}`, "DELETE").catch((error) => __awaiter(this, void 0, void 0, function* () {
-                    yield renderComp(error, arr);
-                }));
-                yield renderComp(`метод ${item} завершен успешно`, arr);
+            console.log('----', item);
+            if (item !== 'divisions' && item !== 'users/staff' && item !== 'devices/{id}/attach') {
+                console.log(ids.get(item));
+                for (let key in ids.get(item)) {
+                    console.log('------', key);
+                    yield asyncFetch(item, "", null, `${item}/${ids.get(item)[key]}`, "DELETE");
+                }
+                methodsComplete.push(item);
             }
         }
+        return methodsComplete;
     });
 }
-/**
- *
- * @param item метод
- * @param query параметры запроса
- * @param bodyData тело запроса
- * @param methodString метод , если в пути  присутствует id
- * @param method тип запроса
- * Возвращает id если PГЕ и 0 если POST
- */
 function asyncFetch(item, query, bodyData, methodString, method) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -157,7 +149,6 @@ function asyncFetch(item, query, bodyData, methodString, method) {
                 body: `${bodyData != null ? JSON.stringify(bodyData) : ""}`
             });
             let responseBody = yield response.text();
-            //console.log(item,bodyData,responseBody);
             // Если айдишник 1
             if (typeof JSON.parse(responseBody).id !== 'undefined') {
                 return JSON.parse(responseBody).id;
@@ -188,3 +179,8 @@ function queryParse(queryTail) {
     let str = params.join("&");
     return str;
 }
+function default_1(schedule) {
+    return new Launcher(schedule);
+}
+exports.default = default_1;
+;

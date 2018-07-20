@@ -1,18 +1,26 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
-import { changeScheduleValueSimple,changeScheduleValueComplex} from '../AC';
+import { changeScheduleValueSimple,changeScheduleValueComplex,addMsgToTerminal} from '../AC';
 import { findDOMNode } from 'react-dom';
 import MontlyIntervalChanger from './MontlyIntervalChanger';
 import SchiftIntervalChanger from './ShiftIntervalChanger';
+import ModalTerminal from './ModalTerminal';
+import launcher from '../lib/api/launcher'
 
 class AutoGenerator extends Component {
   
   static PropTypes = {
-    schedule:PropTypes.object.isRequired
+    schedule:PropTypes.object.isRequired,
+    terminal:PropTypes.object.isRequired
+  }
+
+  state = {
+    open:false
   }
 
   render() {
+    console.log("AUTO",this.props);
     return(
       <form onSubmit = {this.onSubmit}>
         <div className = 'form-row'>
@@ -39,9 +47,16 @@ class AutoGenerator extends Component {
         </div>
         <hr style = {{'border': 'none','background-color':'rgb(230, 230, 230)','color': 'red','height': '2px'}}/>
           {this.showScheduleConfig()}
-          <button type='submit' className='btn btn-primary'>Загенерировать</button>
+          <button type='submit' className='btn btn-primary'>CLARITAS</button>
+          <ModalTerminal terminal = {this.props.terminal} open = {this.state.open} closeModal = {this.closeModal}/>
       </form>
     )
+  }
+
+  closeModal = () =>{
+    this.setState({
+      open:false
+    })
   }
 
   changeValue = (field,option) => e =>{
@@ -183,9 +198,40 @@ class AutoGenerator extends Component {
     return findDOMNode(ref)
   }
 
-  onSubmit = async () => {
-    console.log(this.props);
+  onSubmit = async() => {
+    const {schedule} = this.props;
+    const {addMsgToTerminal} = this.props;
+    const Launcher = launcher(schedule);
+    
+    this.setState({
+      open:true
+    })
+
+    await Launcher.checkDates().then(result=>{
+      addMsgToTerminal(result)
+    }).catch(reason=>{
+        addMsgToTerminal(reason);
+    })
+
+    await Launcher.dependenciesListForming().then(result=>{
+      addMsgToTerminal(result)
+    }).catch(reason=>{
+      addMsgToTerminal(reason);
+    });
+
+    await Launcher.addMethodsData().then(result=>{
+      addMsgToTerminal(result);
+    }).catch(reason=>{
+      addMsgToTerminal(reason);
+    });
+
+    await Launcher.deleteDatafromDB().then(result=>{
+      addMsgToTerminal(result)
+    }).catch(reason=>{
+      addMsgToTerminal(reason);
+    });
+
   }
 };
 
-export default connect(state=>({schedule:state.schedule}),{changeScheduleValueSimple,changeScheduleValueComplex})(AutoGenerator);
+export default connect(state=>({schedule:state.schedule,terminal:state.terminal}),{changeScheduleValueSimple,changeScheduleValueComplex,addMsgToTerminal})(AutoGenerator);
