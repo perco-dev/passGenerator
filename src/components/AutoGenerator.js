@@ -3,10 +3,10 @@ import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
 import { changeScheduleValueSimple,changeScheduleValueComplex,addMsgToTerminal} from '../AC';
 import { findDOMNode } from 'react-dom';
-import MontlyIntervalChanger from './MontlyIntervalChanger';
-import SchiftIntervalChanger from './ShiftIntervalChanger';
+
 import ModalTerminal from './ModalTerminal';
-import launcher from '../lib/api/launcher'
+import * as launcher  from '../lib/api/launcher';
+import ScheduleConfig from './ScheduleConfig';
 
 class AutoGenerator extends Component {
   
@@ -21,6 +21,7 @@ class AutoGenerator extends Component {
 
   render() {
     console.log("AUTO",this.props);
+    
     return(
       <form onSubmit = {this.onSubmit}>
         <div className = 'form-row'>
@@ -34,7 +35,7 @@ class AutoGenerator extends Component {
           </div>
           <div className="form-group col-md-3">
             <label>Тип графика</label>
-            <select className='form-control' onChange = {this.changeValue('scheduleType')}>
+            <select className='form-control' onChange = {this.changeValue('scheduleType')} value = {this.props.schedule.scheduleType}>
               <option value='Недельный'>Недельный</option>
               <option value='Сменный' selected>Сменный</option>
               <option value='По присутствию'>По присутствию</option>
@@ -46,7 +47,7 @@ class AutoGenerator extends Component {
           </div>
         </div>
         <hr style = {{'border': 'none','background-color':'rgb(230, 230, 230)','color': 'red','height': '2px'}}/>
-          {this.showScheduleConfig()}
+          <ScheduleConfig changeValue = {this.changeValue} type = {this.props.schedule.scheduleType}/>
           <button type='submit' className='btn btn-primary'>CLARITAS</button>
           <ModalTerminal terminal = {this.props.terminal} open = {this.state.open} closeModal = {this.closeModal}/>
       </form>
@@ -69,131 +70,10 @@ class AutoGenerator extends Component {
     }
     else{
       obj[field] = { [`${option}`] : e.target.value};
-      //obj['test'] = {test:'13343',tust:true,trust:{tr:'123'}}
       changeScheduleValueComplex(obj)
     }
   }
 
-  showScheduleConfig(){
-    const type = this.props.schedule.scheduleType;
-    switch(type){
-      case 'Недельный' : {
-        return <div style={{'margin-top':'10px'}}>
-          <div className='form-row'>
-
-            <div className='form-group col-md-3'>
-              <label>Приходить позже</label>
-              <div className='row'>
-                <div className = 'col-4'>
-                  <input type='number' min='0' max='24' className = 'form-control' onChange = {this.changeValue('allow_coming_later','h')}/>
-                </div>
-                <div className = 'col-4'>
-                  <input type='number' min='0' max='60' className = 'form-control' onChange = {this.changeValue('allow_coming_later','m')}/>
-                </div>
-              </div>
-            </div>
-
-            <div className='form-group col-md-3'>
-              <label>Уходить раньше</label>
-              <div className = 'row'> 
-                <div className='col-4'>
-                  <input type='number' min='0' max='24' className = 'form-control' onChange = {this.changeValue('allow_leaving_before','h')}/>
-                </div>
-                <div className='col-4'>
-                  <input type='number' min='0' max='60' className = 'form-control' onChange = {this.changeValue('allow_leaving_before','m')}/>
-                </div>
-              </div>
-            </div>
-
-            <div className='form-group col-md-3'>
-              <label>Переработка</label>
-              <div className='row'>
-                <div className='col-4'>
-                  <input type='number' min='0' max='24' className = 'form-control' onChange = {this.changeValue('overtime','h')}/>
-                </div>
-                <div className='col-4'>
-                  <input type='number' min='0' max='60' className = 'form-control' onChange = {this.changeValue('overtime','m')}/>
-                </div>
-              </div>
-            </div>
-            
-            <div className='form-group col-md-3'>
-              <label>Недоработка</label>
-              <div className='row'>
-                <div className='col-4'>
-                  <input type='number' min='0' max='24'  className = 'form-control' onChange = {this.changeValue('undertime','h')}/>
-                </div>:
-                <div className='col-4'>
-                  <input type='number' min='0' max='60' className = 'form-control' onChange = {this.changeValue('undertime','m')}/>
-                </div>
-              </div>
-            </div>
-
-          </div>
-          <div className='form-row'>
-            <div className='form-group col-md-3'>
-              <label>Название графика</label>
-              <input type='text' className = 'form-control' onChange = {this.changeValue('name')}/>
-            </div>
-            <div className = 'col-3'>
-                <label>Не выходной</label>
-                <input type='checkbox' className='form-control col-1' onChange={this.changeValue('is_not_holiday')}/>
-            </div>
-            <div className = 'col-md-3'>
-              <label >ПервоНах</label>
-              <input type='checkbox' className='form-control col-1' onChange={this.changeValue('is_first_input_last_output')}/>
-            </div>
-            <div className = 'form-group col-md-8'> 
-              <MontlyIntervalChanger/>
-            </div>
-          </div>
-        </div>
-      }
-      case 'Сменный' : {
-        return <div style={{'margin-top':'10px'}}>
-          <div className='form-row'>
-
-            <div className='form-group col-md-3'>
-              <label>Приходить позже</label>
-              <input type='time' className = 'form-control' onChange = {this.changeValue('allow_coming_later')}/>
-            </div>
-          
-            <div className='form-group col-md-3'>
-              <label>Уходить раньше</label>
-              <input type='time' className = 'form-control' onChange = {this.changeValue('allow_leaving_before')}/>
-            </div>
-          
-            <div className='form-group col-md-3'>
-              <label>Переработка</label>
-              <input type='time' className = 'form-control' onChange = {this.changeValue('overtime')}/>
-            </div>
-          
-            <div className='form-group col-md-3'>
-              <label>Недоработка</label>
-              <input type='time' className = 'form-control' onChange = {this.changeValue('undertime')}/>
-            </div>
-          
-          </div>
-          <div className='form-row'>
-            <div className='form-group col-md-3'>
-              <label>Название графика</label>
-              <input type='text' className = 'form-control' onChange = {this.changeValue('name')}/>
-            </div>
-            <div className = 'col-md-3'>
-              <label >ПервоНах</label>
-              <input type='checkbox' className='form-control col-1' onChange={this.changeValue('is_first_input_last_output')}/>
-            </div>
-            <div className = 'form-group col-md-12'> 
-              <SchiftIntervalChanger/>
-            </div>
-          </div>
-        </div>
-      }
-      
-      case 'По присутствию' :   return <p>по присутствию</p>
-      default: return <p>!!!</p>
-    }
-  }
   setRef = ref =>{
     return findDOMNode(ref)
   }
@@ -201,18 +81,28 @@ class AutoGenerator extends Component {
   onSubmit = async() => {
     const {schedule} = this.props;
     const {addMsgToTerminal} = this.props;
-    const Launcher = launcher(schedule);
-    
-    this.setState({
-      open:true
-    })
+    let monthlyLauncher = launcher.monthlyLauncher(schedule);
 
-    await Launcher.checkDates().then(result=>{
+    await monthlyLauncher.checkDates().then(result=>{
+      addMsgToTerminal(result);
+    }).catch(reason=>{
+      addMsgToTerminal(reason)
+    });
+
+
+    await monthlyLauncher.checkAverageWeekHours().then(result=>{
+      addMsgToTerminal(result);
+    }).catch(reason=>{
+      addMsgToTerminal(reason);
+    });
+    /*
+    await monthlyLauncher.c .checkDates().then(result=>{
       addMsgToTerminal(result)
     }).catch(reason=>{
         addMsgToTerminal(reason);
     })
-
+    */
+    /*
     await Launcher.dependenciesListForming().then(result=>{
       addMsgToTerminal(result)
     }).catch(reason=>{
@@ -230,7 +120,10 @@ class AutoGenerator extends Component {
     }).catch(reason=>{
       addMsgToTerminal(reason);
     });
-
+    */
+    this.setState({
+      open:true
+    })
   }
 };
 

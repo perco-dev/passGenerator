@@ -6,6 +6,7 @@ import { findDOMNode } from 'react-dom';
 import { Range } from 'rc-slider';
 import 'rc-slider/assets/index.css';
 import intervalChanger from '../decorators/IntervalChanger'
+import * as scheduleTemplate from '../lib/schedules';
 
 class MontlyIntervalChanger extends Component {
   
@@ -34,8 +35,30 @@ class MontlyIntervalChanger extends Component {
       }
     }
   }
-  
+
+  shouldComponentUpdate(nextProps,nextSate){
+    if(nextProps.fromtemplate != this.props.fromtemplate){
+      const {fromtemplate} = nextProps;
+      let  newSchedule = scheduleTemplate.default.week[`${fromtemplate}`];
+      for (let day in newSchedule){
+        for (let interval in newSchedule[`${day}`]['intervals']){
+          const key = Object.keys(newSchedule [`${day}`] ['intervals'] [`${interval}`])[0];
+          Object.assign(newSchedule [`${day}`] ['intervals'] [`${interval}`] [`${key}`],{id:interval} )
+        }
+      }
+      this.setState({
+        week:Object.assign(this.state.week,newSchedule)
+      })
+      return true;
+    }
+    else if (nextSate != this.state){
+      return true;
+    }
+    return false;
+  }
+
   render() {
+    console.log("WeekInterval",this.state);
     return (
       <div>
         <label>Интервалы</label>
@@ -78,7 +101,7 @@ class MontlyIntervalChanger extends Component {
    * Устанавливаем в state текущий объект напр мондай , остальныйе - фальс
    */
   setActive = ref =>{
-    const id = ref.target.id;
+    const {id} = ref.target;
     let obj = {...{},...this.state.week};
     let active = this.state['week'][`${id}`].active;
     for(let key of Object.keys(obj)){
@@ -116,24 +139,27 @@ class MontlyIntervalChanger extends Component {
 
   showInputs(){
     const {week} = this.state;
+    const {setHours} = this.props;
     let day = this.findActiveDay();
+
     if(day != null){
-      const intervals = week[`${day}`].intervals;
+      const {intervals} = week[`${day}`];
       return intervals.map(item=>{
         return <div className='container' key = {item[Object.keys(item)[0]].id}>
           <div className='row'>
             <label className='col-4'>{this.type[Object.keys(item)[0]]}</label>
           </div>
           <div className='row'>
-            <span class="badge badge-light col-1">{this.getCurientRangeValues(item[Object.keys(item)[0]].id)[0]}</span>
+            <span class="badge badge-light col-1">{setHours(this.getCurientRangeValues(item[Object.keys(item)[0]].id)[0])}</span>
             <div className='col-8' style={{'margin-top':'7px'}}>
               <Range
-                min = {this.setRangeValue(item[Object.keys(item)[0]])[0]}
-                max = {this.setRangeValue(item[Object.keys(item)[0]])[1]}
+                min = {6}
+                max = {288}
+                value = {this.getCurientRangeValues(item[Object.keys(item)[0]].id)}
                 onChange = {this.onRangeChange(item[Object.keys(item)[0]].id)}
               />
             </div>
-            <span class="badge badge-light col-1">{this.getCurientRangeValues(item[Object.keys(item)[0]].id)[1]}</span>
+            <span class="badge badge-light col-1">{setHours(this.getCurientRangeValues(item[Object.keys(item)[0]].id)[1])}</span>
             <button className='btn btn-danger btn-sm col-2' onClick={this.deleteInput(item[Object.keys(item)[0]].id)}>Удалить</button>
           </div>
         </div>
@@ -198,8 +224,9 @@ class MontlyIntervalChanger extends Component {
       let min = null;
       if(intervals.length > 0){
         for(let i=intervals.length-1;i>=0;i--){
-          if(Object.keys(intervals[i])[0] !=1){
-            min = intervals[i].end
+          let key = Object.keys(intervals[i])[0]
+          if(key!=1){
+            min = intervals[i][key].end
             break;
           }
         }
@@ -246,15 +273,17 @@ class MontlyIntervalChanger extends Component {
     let day = this.findActiveDay();
     let {setHours} = this.props;
     if(day != null){
-      let {intervals} = this.state.week[`${day}`]
+      let {intervals} = this.state.week[`${day}`];
       if(typeof intervals[index] !== 'undefined'){
-        let begin = typeof intervals[index].begin === 'undefined' ? '00:30' : setHours(intervals[index].begin);
-        let end = typeof intervals[index].end  === 'undefined' ? '23:30' : setHours(intervals[index].end)
+        const interval = intervals [index] [Object.keys(intervals[index])[0]];
+        let begin = typeof interval['begin'] === 'undefined' ? 6 : interval['begin'];
+        let end = typeof interval['end']  === 'undefined' ? 288 : interval['end'];
+        console.log(begin,end);
         return [begin,end]
       }
 
       else{
-        return ['00:30','23:30']
+        return [6,288]
       }
     }
   }
@@ -263,8 +292,14 @@ class MontlyIntervalChanger extends Component {
     let day = this.findActiveDay();
     if(day !=null){
       let {intervals} = this.state['week'][`${day}`];
-      intervals[index].begin = value[0];
-      intervals[index].end = value[1];
+      let key = Object.keys(intervals[index])[0];
+      let interval = intervals[index][key];
+
+      interval.begin = value [0];
+      interval.end = value [1];
+      
+      Object.assign(intervals[index][key],interval);
+      
       let week = {...this.state.week,...{ [`${day}`] : { active:true,intervals:intervals } } }
       this.setState(week);
     }
@@ -284,6 +319,8 @@ class MontlyIntervalChanger extends Component {
     const intervals = {intervals:this.state.week};
     changeScheduleValueComplex(intervals);
   }
+  
+  
 };
 
 export default intervalChanger(MontlyIntervalChanger);

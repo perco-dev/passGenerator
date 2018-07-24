@@ -18,7 +18,7 @@ class Launcher{
   }
   
   //Валидация начала и конца генерации
-  async checkDates(){
+  async checkDates():Promise<any>{
     if(this.begin.split('-').length != 3 || this.end.split('-').length !=3){
       return Promise.reject({error:'Не указана дата начала или конца генерации'})
     }
@@ -28,7 +28,7 @@ class Launcher{
   }
   
   //Формирование списка зависимых методов для метода
-  async dependenciesListForming(){
+  async dependenciesListForming():Promise<any>{
     try{
       this.willReplacedByIdsDep = new Map(prepare.bootstrap("sysserver/addDeviceEvent").buildDepMap());
     }
@@ -39,7 +39,7 @@ class Launcher{
   }
 
   //Добавление данных для зависимых методов
-  async addMethodsData(){
+  async addMethodsData():Promise<any>{
     //Список зависимых методов
     let methodsComplete:any = [];
     try{
@@ -87,7 +87,6 @@ class Launcher{
         if(typeof id != 'undefined' && id != 0){
           this.idsMap.get(item).push(id);
           prepare.bootstrap(item).idSearcher(this.idsMap,this.willReplacedByIdsDep);
-          methodsComplete.push(item);
         }
       }
     }
@@ -98,7 +97,7 @@ class Launcher{
   }
 
   //Удаляем данные из БД + детачим контроллер
-  async deleteDatafromDB(){
+  async deleteDatafromDB():Promise<any>{
     let methodsComplete:any = [];
     try{
       await asyncFetch(`devices/${this.idsMap.get('devices')[0]}/detach`,"",null,null,"POST")
@@ -112,19 +111,61 @@ class Launcher{
   }
 }
 
+class MonthlyLauncher extends Launcher{
+  allow_coming_later:any;
+  allow_living_before:any;
+  hours:any;
+  intervals:any;
+  is_first_input_last_output:any;
+  is_not_holiday:any;
+  name:any;
+  overtime:any;
+  undertime:any;
+  
+  constructor(store:any){
+    super(store);
+    this.allow_coming_later = store.allow_coming_later;
+    this.allow_living_before = store.allow_living_before;
+    this.hours = store.hours;
+    this.intervals = store.intervals;
+    this.is_first_input_last_output = store.is_first_input_last_output;
+    this.is_not_holiday = store.is_first_input_last_output;
+    this.is_not_holiday = store.is_not_holiday;
+    this.name = store.name;
+    this.overtime = store.overtime;
+    this.undertime = store.undertime
+  }
+  
+  async checkDates():Promise<any>{
+    return await super.checkDates();
+  }
+
+  async dependenciesListForming():Promise<any>{
+    return await super.dependenciesListForming()
+  }
+
+  async addMethodsData():Promise<any>{
+    return await super.addMethodsData()
+  }
+
+  async deleteDatafromDB():Promise<any>{
+    return await super.deleteDatafromDB()
+  }
+
+  async checkAverageWeekHours():Promise<any>{
+    return Promise.resolve({msg:"Опять хорошо"});
+  }
+}
+
 /**
  * @param ids массив типа метод - id
  * возвращает void
  */
 async function deleteDependencies(ids:any){
   let methodsComplete = [];
-  console.log('---',ids);
   for (let item of ids.keys()){
-    console.log('----',item);
     if(item !== 'divisions' && item !=='users/staff' && item!=='devices/{id}/attach'){
-      console.log(ids.get(item));
       for(let key in ids.get(item)){
-        console.log('------',key);
         await asyncFetch(item,"",null,`${item}/${ids.get(item)[key]}`,"DELETE");
       }
       methodsComplete.push(item);
@@ -176,6 +217,6 @@ function queryParse(queryTail:any){
   return str;
 }
 
-export default function(schedule:any){
-  return new Launcher(schedule);
+export function monthlyLauncher(schedule:any){
+  return new MonthlyLauncher(schedule);
 };

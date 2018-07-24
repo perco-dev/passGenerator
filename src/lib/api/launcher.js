@@ -91,7 +91,6 @@ class Launcher {
                     if (typeof id != 'undefined' && id != 0) {
                         this.idsMap.get(item).push(id);
                         prepare.bootstrap(item).idSearcher(this.idsMap, this.willReplacedByIdsDep);
-                        methodsComplete.push(item);
                     }
                 }
             }
@@ -117,6 +116,50 @@ class Launcher {
         });
     }
 }
+class MonthlyLauncher extends Launcher {
+    constructor(store) {
+        super(store);
+        this.allow_coming_later = store.allow_coming_later;
+        this.allow_living_before = store.allow_living_before;
+        this.hours = store.hours;
+        this.intervals = store.intervals;
+        this.is_first_input_last_output = store.is_first_input_last_output;
+        this.is_not_holiday = store.is_first_input_last_output;
+        this.is_not_holiday = store.is_not_holiday;
+        this.name = store.name;
+        this.overtime = store.overtime;
+        this.undertime = store.undertime;
+    }
+    checkDates() {
+        const _super = name => super[name];
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield _super("checkDates").call(this);
+        });
+    }
+    dependenciesListForming() {
+        const _super = name => super[name];
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield _super("dependenciesListForming").call(this);
+        });
+    }
+    addMethodsData() {
+        const _super = name => super[name];
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield _super("addMethodsData").call(this);
+        });
+    }
+    deleteDatafromDB() {
+        const _super = name => super[name];
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield _super("deleteDatafromDB").call(this);
+        });
+    }
+    checkAverageWeekHours() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return Promise.resolve({ msg: "Опять хорошо" });
+        });
+    }
+}
 /**
  * @param ids массив типа метод - id
  * возвращает void
@@ -124,13 +167,9 @@ class Launcher {
 function deleteDependencies(ids) {
     return __awaiter(this, void 0, void 0, function* () {
         let methodsComplete = [];
-        console.log('---', ids);
         for (let item of ids.keys()) {
-            console.log('----', item);
             if (item !== 'divisions' && item !== 'users/staff' && item !== 'devices/{id}/attach') {
-                console.log(ids.get(item));
                 for (let key in ids.get(item)) {
-                    console.log('------', key);
                     yield asyncFetch(item, "", null, `${item}/${ids.get(item)[key]}`, "DELETE");
                 }
                 methodsComplete.push(item);
@@ -179,8 +218,8 @@ function queryParse(queryTail) {
     let str = params.join("&");
     return str;
 }
-function default_1(schedule) {
-    return new Launcher(schedule);
+function monthlyLauncher(schedule) {
+    return new MonthlyLauncher(schedule);
 }
-exports.default = default_1;
+exports.monthlyLauncher = monthlyLauncher;
 ;
