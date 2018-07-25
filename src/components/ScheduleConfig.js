@@ -99,7 +99,6 @@ class ScheduleConfig extends Component {
 
   intervalSelector(){
     const {type} = this.props;
-    console.log(type);
     switch(type){
       case  'Недельный' : {
         return <MontlyIntervalChanger fromtemplate = {this.state.fromtemplate}/>

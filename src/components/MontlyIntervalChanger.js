@@ -58,7 +58,7 @@ class MontlyIntervalChanger extends Component {
   }
 
   render() {
-    console.log("WeekInterval",this.state);
+    //console.log("WeekInterval",this.state);
     return (
       <div>
         <label>Интервалы</label>
@@ -271,14 +271,12 @@ class MontlyIntervalChanger extends Component {
   //Устанавливает начальные значения для интервала
   getCurientRangeValues = index =>{
     let day = this.findActiveDay();
-    let {setHours} = this.props;
     if(day != null){
       let {intervals} = this.state.week[`${day}`];
       if(typeof intervals[index] !== 'undefined'){
         const interval = intervals [index] [Object.keys(intervals[index])[0]];
         let begin = typeof interval['begin'] === 'undefined' ? 6 : interval['begin'];
         let end = typeof interval['end']  === 'undefined' ? 288 : interval['end'];
-        console.log(begin,end);
         return [begin,end]
       }
 

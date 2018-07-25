@@ -27,7 +27,6 @@ export default Interval => connect(state=>({schedule:state.schedule}),{changeSch
   setHours(value){
     let h = (parseInt(value,10) *5) / 60 < 1 ? 0 : Math.floor((value*5)/60);
     let m = ((parseInt(value,10) *5) % 60) < 10 ? '0' +  (parseInt(value,10) *5) % 60 : (parseInt(value,10) *5) % 60;
-    //console.log("^^^",h,m);
     return `${h}:${m}`
   }
 

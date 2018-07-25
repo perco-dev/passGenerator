@@ -8,9 +8,10 @@ class Launcher{
   begin: any;
   end: any;
   
-  willReplacedByIdsDep:any;
   idsMap:any = new Map();
   dependencies: any = depend.default;
+
+  protected willReplacedByIdsDep:any
 
   constructor(store:any){
     this.begin = store.beginDate;
@@ -112,6 +113,8 @@ class Launcher{
 }
 
 class MonthlyLauncher extends Launcher{
+  begin:any;
+  end:any;
   allow_coming_later:any;
   allow_living_before:any;
   hours:any;
@@ -121,9 +124,29 @@ class MonthlyLauncher extends Launcher{
   name:any;
   overtime:any;
   undertime:any;
+  totalWorkTime:any = 0;
+  workDayCount:any = 0;
+  workDayHoursAverage:any = 0;
+  weekIndex:any = {0:'sunday',1:'monday',2:'tuesday',3:'wednesday',4:'thursday',5:'friday',6:'saturday'};
+  dayCount:any  = {
+    0:checkFebruar(0),
+    1:checkFebruar(1),
+    2:checkFebruar(2),
+    3:checkFebruar(3), 
+    4:checkFebruar(4),
+    5:checkFebruar(5),
+    6:checkFebruar(6),
+    7:checkFebruar(7),
+    8:checkFebruar(8),
+    9:checkFebruar(9),
+    10:checkFebruar(10),
+    11:checkFebruar(11),
+  };
   
   constructor(store:any){
     super(store);
+    this.begin = store.beginDate;
+    this.end = store.endDate
     this.allow_coming_later = store.allow_coming_later;
     this.allow_living_before = store.allow_living_before;
     this.hours = store.hours;
@@ -153,7 +176,64 @@ class MonthlyLauncher extends Launcher{
   }
 
   async checkAverageWeekHours():Promise<any>{
-    return Promise.resolve({msg:"Опять хорошо"});
+    let start = this.begin.split('-');
+    let finish = this.end.split('-');
+    if(Object.keys(this.intervals).length == 0) return Promise.reject({error:"Не заданы интервалы"});
+    if(typeof this.hours === 'undefined') return Promise.reject({error:"Не указано колличество часов"});
+
+    //Подсчет рабочеггоо времени за интервал
+
+    try{
+      year: 
+        for (let year:any = parseInt(start[0]); year <= parseInt(finish[0]); year++){
+        let month = year > parseInt(start[0]) ? 0 : parseInt(start[1]) - 1;
+        for(month; month < 12; month++){
+          let day;
+          if (month != parseInt(start[1]) && year != parseInt(start[0])){
+            day = 0;
+          }
+          else{
+            day = parseInt(start[2]);
+          }
+          for(day; day <= this.dayCount[month](year); ++day){
+            if(day > parseInt(finish[2]) && month >= (parseInt(finish[1])-1) && year >= parseInt(finish[0])) {
+              break year;
+            }
+            else{
+              let date = new Date(year,month,day);
+              //Интервалы текущего дня
+              let intervalArray = this.intervals[this.weekIndex[date.getDay()]]['intervals'];
+              //console.log(`${ this.weekIndex [date.getDay()]}`,intervalArray);
+              if(intervalArray.length != 0) {
+                this.workDayCount++
+              }          
+              for(let item in intervalArray){
+                let key:any = Object.keys(intervalArray[item]);
+                //console.log( intervalArray[item][key])
+                let intervalHours:number =  parseInt(intervalArray[item][key]['end']) - parseInt(intervalArray[item][key]['begin']);
+                this.totalWorkTime += intervalHours;
+              }
+            }
+          }
+        }
+      }
+      this.workDayHoursAverage = (this.totalWorkTime * 5) / this.workDayCount
+    }
+    catch(e){
+      return Promise.reject({error:`${e}`});
+    }
+    if (Math.floor((parseInt(this.totalWorkTime) * 5)/60) > this.hours) {
+      return Promise.resolve({msg:'Колличество часов не больше колличества рабочего времени'});
+    }
+    else{
+      return Promise.reject({error:"Колличество часов превышает колличество рабочего времени за указанный промежуток"});
+    }
+  }
+  
+  //Генерация событий прохода
+  async addEvent(){
+    console.log("!!!",super.willReplacedByIdsDep)
+    return Promise.resolve({msg:'It was willReplacedByIdsDep'});
   }
 }
 
@@ -215,6 +295,31 @@ function queryParse(queryTail:any){
   });
   let str = params.join("&");
   return str;
+}
+
+function checkFebruar(monthNumber:number){
+  return (year:number) => {
+    if(monthNumber == 1){
+      if(year % 400 == 0 && year % 100 == 0){
+        return 28
+      }
+      else if(year % 4 != 0){
+        return 28
+      }
+      return 31;
+    }
+    else if (monthNumber == 0)  return 31;
+    else if (monthNumber == 2)  return 31;
+    else if (monthNumber == 3)  return 30;
+    else if (monthNumber == 4)  return 31;
+    else if (monthNumber == 5)  return 30;
+    else if (monthNumber == 6)  return 31;
+    else if (monthNumber == 7)  return 31;
+    else if (monthNumber == 8)  return 30;
+    else if (monthNumber == 9)  return 31;
+    else if (monthNumber == 10) return 30;
+    else if (monthNumber == 11) return 31;
+  }
 }
 
 export function monthlyLauncher(schedule:any){

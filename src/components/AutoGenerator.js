@@ -20,10 +20,9 @@ class AutoGenerator extends Component {
   }
 
   render() {
-    console.log("AUTO",this.props);
-    
+   //console.log("AUTO",this.props);
     return(
-      <form onSubmit = {this.onSubmit}>
+      <form>
         <div className = 'form-row'>
           <div className="form-group col-md-3">
             <label>Дата начала генерации</label>
@@ -48,7 +47,7 @@ class AutoGenerator extends Component {
         </div>
         <hr style = {{'border': 'none','background-color':'rgb(230, 230, 230)','color': 'red','height': '2px'}}/>
           <ScheduleConfig changeValue = {this.changeValue} type = {this.props.schedule.scheduleType}/>
-          <button type='submit' className='btn btn-primary'>CLARITAS</button>
+          <button type='button' className='btn btn-primary' onClick = {this.onSubmit}>CLARITAS</button>
           <ModalTerminal terminal = {this.props.terminal} open = {this.state.open} closeModal = {this.closeModal}/>
       </form>
     )
@@ -83,44 +82,49 @@ class AutoGenerator extends Component {
     const {addMsgToTerminal} = this.props;
     let monthlyLauncher = launcher.monthlyLauncher(schedule);
 
+    //Проверка формата даты
     await monthlyLauncher.checkDates().then(result=>{
       addMsgToTerminal(result);
     }).catch(reason=>{
       addMsgToTerminal(reason)
     });
 
-
+    //Проверка максимально возможного колличества рабочих часов в заданом интервале
     await monthlyLauncher.checkAverageWeekHours().then(result=>{
       addMsgToTerminal(result);
     }).catch(reason=>{
       addMsgToTerminal(reason);
     });
-    /*
-    await monthlyLauncher.c .checkDates().then(result=>{
-      addMsgToTerminal(result)
-    }).catch(reason=>{
-        addMsgToTerminal(reason);
-    })
-    */
-    /*
-    await Launcher.dependenciesListForming().then(result=>{
-      addMsgToTerminal(result)
-    }).catch(reason=>{
-      addMsgToTerminal(reason);
-    });
-
-    await Launcher.addMethodsData().then(result=>{
+    
+    //Формирование списка зависимых методов для генерации событий прохода
+    await monthlyLauncher.dependenciesListForming().then(result=>{
       addMsgToTerminal(result);
     }).catch(reason=>{
       addMsgToTerminal(reason);
     });
 
-    await Launcher.deleteDatafromDB().then(result=>{
+    // Добавляем айдишники и др данные в зависимые методы
+    await monthlyLauncher.addMethodsData().then(result=>{
+      addMsgToTerminal(result);
+    }).catch(reason=>{
+      addMsgToTerminal(reason);
+    });
+    
+    //Генерируем события
+    await monthlyLauncher.addEvent().then(result=>{
       addMsgToTerminal(result)
     }).catch(reason=>{
       addMsgToTerminal(reason);
     });
-    */
+
+    //Удаляем данные из бызы после завпросов
+    await monthlyLauncher.deleteDatafromDB().then(result=>{
+      addMsgToTerminal(result);
+    }).catch(reason=>{
+      addMsgToTerminal(reason);
+    });
+
+    // Показываем результат
     this.setState({
       open:true
     })

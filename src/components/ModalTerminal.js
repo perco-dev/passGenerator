@@ -17,7 +17,7 @@ class ModalTerminal extends Component {
     const {open} = this.props;
     const {closeModal} = this.props;
     const {terminal} = this.props; 
-    console.log("****",terminal);
+    //console.log("****",terminal);
     const terminalList = terminal.map(item=>{
       let color;
       if(Object.keys(item)[0] == 'msg'){ color = 'green'}
@@ -31,7 +31,7 @@ class ModalTerminal extends Component {
           <output className="col-12" 
             style = {{
               'backgroundColor':'#F0F0F0',
-              'height':`${window.innerHeight/4 - 50}px`,
+              'height':`${window.innerHeight/2 - 50}px`,
               'border':'3px inset #E8E8E8',
               'overflow':'scroll'
             }}>
