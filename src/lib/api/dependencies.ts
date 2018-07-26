@@ -4,14 +4,13 @@
       {
         "query":{
           "deviceId": 'devices_id_0',
-          "date":"###",
-          "type":'###',
-          "resource":'###',
-          "resourceType":'###',
-          "identifier":'###',
-          "data":'###',
-          "operatorId":'###',
-          "userId":'###'
+          "type":'17',
+          "userId":'users/staff_id_0',
+          "resource":0,
+          "resourceType":0,
+          "data":0,
+          "identifier":0,
+          "operatorId":0
         }
       }
     ],

@@ -110,9 +110,23 @@ class AutoGenerator extends Component {
       addMsgToTerminal(reason);
     });
     
+    //Добавляем график
+    await monthlyLauncher.addSchedule().then(result=>{
+      addMsgToTerminal(result);
+    }).catch(reason=>{
+      addMsgToTerminal(reason)
+    });
+
     //Генерируем события
     await monthlyLauncher.addEvent().then(result=>{
       addMsgToTerminal(result)
+    }).catch(reason=>{
+      addMsgToTerminal(reason);
+    });
+
+    //Запуск ОРВ
+    await monthlyLauncher.timeTracking().then(result=>{
+      addMsgToTerminal(result);
     }).catch(reason=>{
       addMsgToTerminal(reason);
     });
@@ -127,7 +141,7 @@ class AutoGenerator extends Component {
     // Показываем результат
     this.setState({
       open:true
-    })
+    });
   }
 };
 

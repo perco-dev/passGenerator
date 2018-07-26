@@ -8,10 +8,10 @@ export default Interval => connect(state=>({schedule:state.schedule}),{changeSch
     
     this.state = {
       type:{
-        0:'Начало смены',
-        1:'Конец смены',
-        2:'Полная смена',
-        3:'Интервал'
+        0:'Интервал',
+        1:'Начало смены',
+        2:'Конец смена',
+        3:'Полная смена'
       }
     }
 

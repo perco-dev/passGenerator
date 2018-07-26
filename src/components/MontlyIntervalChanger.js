@@ -127,10 +127,10 @@ class MontlyIntervalChanger extends Component {
           <button className="btn btn-outline" type="button" onClick = {this.addInput}>Добавить интервал</button>
         </div>
         <select className="custom-select col-4" onChange={e=>{this.setState({interval:e.target.value})}}>
-          <option selected value="0">Начало смены</option>
-          <option value="1">Конец смены</option>
-          <option value="2">Полная смена</option>
-          <option value="3">Промежуточный интервал</option>
+          <option selected value="0">интервал</option>
+          <option value="1">начало смены</option>
+          <option value="2">конец смена</option>
+          <option value="3">полная смена</option>
         </select>
         <button type='button' className = 'btn btn-success'  style={{'margin-left':'50px'}}onClick={this.sentSchedule}>записать интервалы</button>
       </div>
