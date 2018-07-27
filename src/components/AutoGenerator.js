@@ -87,6 +87,8 @@ class AutoGenerator extends Component {
       addMsgToTerminal(result);
     }).catch(reason=>{
       addMsgToTerminal(reason)
+      this.setState({open:true});
+      throw new Error();
     });
 
     //Проверка максимально возможного колличества рабочих часов в заданом интервале
@@ -94,13 +96,19 @@ class AutoGenerator extends Component {
       addMsgToTerminal(result);
     }).catch(reason=>{
       addMsgToTerminal(reason);
+      this.setState({open:true});
+      throw new Error();
     });
     
+    
+
     //Формирование списка зависимых методов для генерации событий прохода
     await monthlyLauncher.dependenciesListForming().then(result=>{
       addMsgToTerminal(result);
     }).catch(reason=>{
       addMsgToTerminal(reason);
+      this.setState({open:true});
+      throw new Error();
     });
 
     // Добавляем айдишники и др данные в зависимые методы
@@ -108,13 +116,17 @@ class AutoGenerator extends Component {
       addMsgToTerminal(result);
     }).catch(reason=>{
       addMsgToTerminal(reason);
+      this.setState({open:true});
+      throw new Error();
     });
-    
-    //Добавляем график
+
+    //Добавляем график (только после добавления данных в зависимые методы ибо добавляется access_zone)
     await monthlyLauncher.addSchedule().then(result=>{
       addMsgToTerminal(result);
     }).catch(reason=>{
       addMsgToTerminal(reason)
+      this.setState({open:true});
+      throw new Error();
     });
 
     //Генерируем события
@@ -122,6 +134,8 @@ class AutoGenerator extends Component {
       addMsgToTerminal(result)
     }).catch(reason=>{
       addMsgToTerminal(reason);
+      this.setState({open:true});
+      throw new Error();
     });
 
     //Запуск ОРВ
@@ -129,6 +143,8 @@ class AutoGenerator extends Component {
       addMsgToTerminal(result);
     }).catch(reason=>{
       addMsgToTerminal(reason);
+      this.setState({open:true});
+      throw new Error();
     });
 
     //Удаляем данные из бызы после завпросов
@@ -136,6 +152,8 @@ class AutoGenerator extends Component {
       addMsgToTerminal(result);
     }).catch(reason=>{
       addMsgToTerminal(reason);
+      this.setState({open:true});
+      throw new Error();
     });
 
     // Показываем результат

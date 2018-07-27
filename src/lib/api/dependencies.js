@@ -56,6 +56,7 @@ let depend = {
                     "first_name": "генераторович",
                     "division": "divisions_id_0",
                     "hiring_date": "begin_datetime_id_0",
+                    "work_schedule": "Добавиться после добавления графика в гшенераторе",
                     "identifier": [
                         {
                             "begin_datetime": "begin_datetime_id_0",

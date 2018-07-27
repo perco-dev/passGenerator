@@ -3,6 +3,20 @@ import * as depend from './dependencies';
 import * as prepare from './boots'
 const headers = {'Content-Type':'application/json','Accept': 'application/json'};
 const host = 'http://localhost:8080/api'; 
+let dayCount:any = {
+  0:checkFebruar(0),
+  1:checkFebruar(1),
+  2:checkFebruar(2),
+  3:checkFebruar(3), 
+  4:checkFebruar(4),
+  5:checkFebruar(5),
+  6:checkFebruar(6),
+  7:checkFebruar(7),
+  8:checkFebruar(8),
+  9:checkFebruar(9),
+  10:checkFebruar(10),
+  11:checkFebruar(11),
+};
 
 class Launcher{
   begin: any;
@@ -35,7 +49,7 @@ class Launcher{
       this.willReplacedByIdsDep = new Map(prepare.bootstrap("sysserver/addDeviceEvent").buildDepMap());
     }
     catch(e){
-      return Promise.reject({error:`${e}`});
+      return Promise.reject({error:`Не удалось сформировать зависимые методы : ${e}`});
     }
   return Promise.resolve({msg:'сформированы зависимые методы'});
   }
@@ -106,13 +120,11 @@ class Launcher{
       methodsComplete = await deleteDependencies(this.idsMap);
     }
     catch(e){
-      return Promise.reject({error:`${e}`});
+      return Promise.reject({error:`Не удалось удалить данные : ${e}`});
     }
-    return Promise.resolve({msg:`методы ${methodsComplete} завершены успешно , \nудалите юзера и подразделение самостоятельно !!!`});
+    return Promise.resolve({msg:`методы ${methodsComplete} завершены успешно, удалите юзера и подразделение самостоятельно !!!`});
   }
-
 }
-
 
 
 
@@ -129,30 +141,18 @@ class MonthlyLauncher extends Launcher{
   overtime:any;
   undertime:any;
   aceess_zones:any = [];
-  schedule_id:any
+  schedule_id:any;
+  workEra:any = {};
+
   
   //Общее кол-во часов за промежуток по графику
   totalWorkTime:any = 0;
   //Кол-во рабочих дней
   workDayCount:any = 0;
   //Среднее кол-во часов врабочем дне по графику
-  workDayHoursAverage:any = 0;
 
   weekIndex:any = {0:'sunday',1:'monday',2:'tuesday',3:'wednesday',4:'thursday',5:'friday',6:'saturday'};
-  dayCount:any  = {
-    0:checkFebruar(0),
-    1:checkFebruar(1),
-    2:checkFebruar(2),
-    3:checkFebruar(3), 
-    4:checkFebruar(4),
-    5:checkFebruar(5),
-    6:checkFebruar(6),
-    7:checkFebruar(7),
-    8:checkFebruar(8),
-    9:checkFebruar(9),
-    10:checkFebruar(10),
-    11:checkFebruar(11),
-  };
+  
   willReplacedByIdsDep:any
   
   constructor(store:any){
@@ -175,71 +175,68 @@ class MonthlyLauncher extends Launcher{
   async checkDates():Promise<any>{
     return await super.checkDates();
   }
-
+  
+  //ФОРМИРОВАНИЕ СПИСКА ЗАВИСИМЫХ МЕТОДОВ
   async dependenciesListForming():Promise<any>{
-    return await super.dependenciesListForming()
+    return await super.dependenciesListForming();
   }
 
+  //ДОБАВЛЕНИЕ АЙДИШНИКОВ В МЕТОДЫ (ВМЕСТО [METHOD]_ID_0||2 В dependencies)
   async addMethodsData():Promise<any>{
-    return await super.addMethodsData()
+    //Добавляем айди графика к сотруднику
+    try{
+      this.willReplacedByIdsDep.get('users/staff')[0]['body']['work_schedule'] = this.schedule_id;
+    }
+    catch(e){
+      return Promise.reject({error:`Не возможно добавить график пользователю : ${e}`});
+    }
+    return await super.addMethodsData();
   }
 
   async deleteDatafromDB():Promise<any>{
-    return await super.deleteDatafromDB()
+    try{  
+      await asyncFetch(`taSchedule/${this.schedule_id}`,"",null,null,"DELETE");
+    }
+    catch(e){
+      return Promise.reject({error:`Не возможно удалить график : ${e}`});
+    }
+    return await super.deleteDatafromDB();
   }
 
   async checkAverageWeekHours():Promise<any>{
-    let start = this.begin.split('-');
-    let finish = this.end.split('-');
+    //let start = this.begin.split('-');
+    //let finish = this.end.split('-');
     if(Object.keys(this.intervals).length == 0) return Promise.reject({error:"Не заданы интервалы"});
     if(typeof this.hours === 'undefined') return Promise.reject({error:"Не указано колличество часов"});
-
-    //Подсчет рабочеггоо времени за интервал
-
     try{
-      year: 
-        for (let year:any = parseInt(start[0]); year <= parseInt(finish[0]); year++){
-        let month = year > parseInt(start[0]) ? 0 : parseInt(start[1]) - 1;
-        for(month; month < 12; month++){
-          let day;
-          if (month != parseInt(start[1]) && year != parseInt(start[0])){
-            day = 0;
-          }
-          else{
-            day = parseInt(start[2]);
-          }
-          for(day; day <= this.dayCount[month](year); ++day){
-            if(day > parseInt(finish[2]) && month >= (parseInt(finish[1])-1) && year >= parseInt(finish[0])) {
-              break year;
-            }
-            else{
-              let date = new Date(year,month,day);
-              //Интервалы текущего дня
-              let intervalArray = this.intervals[this.weekIndex[date.getDay()]]['intervals'];
-              //console.log(`${ this.weekIndex [date.getDay()]}`,intervalArray);
-              if(intervalArray.length != 0) {
-                this.workDayCount++
-              }          
-              for(let item in intervalArray){
-                let key:any = Object.keys(intervalArray[item]);
-                //console.log( intervalArray[item][key])
-                let intervalHours:number =  parseInt(intervalArray[item][key]['end']) - parseInt(intervalArray[item][key]['begin']);
-                this.totalWorkTime += intervalHours * 5;
-              }
-            }
-          }
+      await dayInterator(this.begin,this.end, async (year:number,month:number,day:number)=>{
+        let date = new Date(year,month,day);
+        let intervalArray = this.intervals[this.weekIndex[date.getDay()]]['intervals'];
+  
+        if(intervalArray.length != 0) {this.workDayCount++}
+  
+        for(let item in intervalArray){
+          let key:any = Object.keys(intervalArray[item]);
+          //minutes
+          let intervalHours:number =  (parseInt(intervalArray[item][key]['end']) - parseInt(intervalArray[item][key]['begin'] )) * 5;
+          this.totalWorkTime += intervalHours;
         }
-      }
-      this.workDayHoursAverage = (this.totalWorkTime) / this.workDayCount
+      });
     }
     catch(e){
-      return Promise.reject({error:`${e}`});
+      return Promise.reject({error:`Ошибка подсчета рабочего времени`});
     }
-    if (Math.floor((parseInt(this.totalWorkTime) * 5)/60) > this.hours) {
-      return Promise.resolve({msg:'Колличество часов не больше колличества рабочего времени'});
+
+    //minutes
+   if (this.hours * 60 > this.totalWorkTime && this.hours < this.workDayCount * 24 * 60) {
+      return Promise.resolve({warning:'Колличество часов для генерации ,больше чем часов в рабочих промежутках'});
+    }
+    //minutes
+    else if (this.hours * 60 > this.workDayCount * 24 * 60){
+      return Promise.reject({error:'Не возможно сгенерировать больше чем 24 часа в сутки'});
     }
     else{
-      return Promise.reject({error:"Колличество часов превышает колличество рабочего времени за указанный промежуток"});
+      return Promise.resolve({msg:"График позволяет сгенерировать рабочее время без переработки"});
     }
   }
   
@@ -247,17 +244,16 @@ class MonthlyLauncher extends Launcher{
   async addSchedule(){
     let scheduleIntervals:any = [];
     for(let day of Object.keys(this.intervals)){
-      let dayObj:any = {/*desk:`${day}`,*/'intervals':[]}
+      let dayObj:any = {desk:`${day}`,'intervals':[]}
       for(let interval in this.intervals[day]['intervals']){
         let key:string = Object.keys(this.intervals[day]['intervals'][interval])[0];
-        let curientInterval:any = {
+        dayObj['intervals'].push({
           type: parseInt(key),
           begin:this.intervals [ day ] [ 'intervals' ] [interval] [ key ] [ 'begin' ] * 5 * 60 ,
           end: this.intervals [ day ] [ 'intervals' ] [interval] [ key ] [ 'end' ] * 5 * 60 ,
-        }
-        dayObj['intervals'].push(curientInterval)
+        });
       }
-    scheduleIntervals.push(dayObj);
+      scheduleIntervals.push(dayObj);
     }
 
     //Достаем зону доступа
@@ -267,19 +263,31 @@ class MonthlyLauncher extends Launcher{
       name:this.name,
       type:2,
       allow_coming_later: `${await toSeconds(this.allow_coming_later)}`,
-      allow_leaving_before: `${await toSeconds(this.allow_living_before)}`,
-      overtime: `${await toSeconds(this.overtime)}`,
-      undertime: `${await toSeconds(this.undertime)}`,
+      allow_leaving_before: `${await toSeconds(this.allow_living_before)}` ,
+      overtime:`${await toSeconds(this.overtime)}`,
+      undertime:`${await toSeconds(this.undertime)}`,
       is_not_holiday: this.is_not_holiday != null ? this.is_not_holiday : false ,
       is_first_input_last_output: this.is_first_input_last_output != null ? this.is_first_input_last_output : false,
       begin_date:this.begin,
       intervals:scheduleIntervals,
       access_zones:access_zone
     }
-
+    
+    //Добавление графика в бд и редактирование сотрудника
     try{
-      var scheduleId = await asyncFetch('taSchedule',"",body,null,'PUT');
-      if (typeof scheduleId !== 'undefined') this.schedule_id = scheduleId;
+      this.schedule_id = await asyncFetch('taSchedule',"",body,null,'PUT');
+      if (typeof this.schedule_id !== 'undefined') {
+        //добавляем график для в карту с данными
+        this.willReplacedByIdsDep.get('users/staff')[0]['body']['work_schedule'] = this.schedule_id;
+        //Достаем айдишник сотрудника для ПОСТ метода
+        const userId = this.willReplacedByIdsDep.get('sysserver/addDeviceEvent')[0]['query']['userId'];
+        if (typeof userId !=='undefined' ){
+          await asyncFetch(`users/staff/${userId}`,'',this.willReplacedByIdsDep.get('users/staff')[0]['body'],null,'POST')
+        }
+        else{
+          return Promise.reject({error:'Не возможно добавить график для сотрудника'})
+        }
+      }
     }
     catch(e){
       return Promise.reject({error:`Ошибка выполнения метода добавления графика : ${e}`});
@@ -289,103 +297,101 @@ class MonthlyLauncher extends Launcher{
 
   //Генерация событий прохода
   async addEvent(){
+    /*
     let start = this.begin.split('-');
     let finish = this.end.split('-');
-
-    console.log("!!!",this.willReplacedByIdsDep);
+    
+    //Итерируемся по временному промежутку
     try{
       year: 
-        for (let year:any = parseInt(start[0]); year <= parseInt(finish[0]); year++){
+      for (let year:any = parseInt(start[0]); year <= parseInt(finish[0]); year++){
+        //Если начался новый год  %) - начинаем с нуля , а не с начала интервала
         let month = year > parseInt(start[0]) ? 0 : parseInt(start[1]) - 1;
         for(month; month < 12; month++){
-          let day;
-          if (month != parseInt(start[1]) && year != parseInt(start[0])){
-            day = 0;
-          }
-          else{
-            day = parseInt(start[2]);
-          }
+          let day = parseInt(start[2]);
+          //если месяц и год не равны концу интервала итерируемся с первого дня 
+          if (month != parseInt(start[1]) && year != parseInt(start[0])) { day = 0; }
+
           for(day; day <= this.dayCount[month](year); ++day){
-            if(day > parseInt(finish[2]) && month >= (parseInt(finish[1])-1) && year >= parseInt(finish[0])) {
-              break year;
+            //Выходим из цикла если достигли конца интервала
+            if(day > parseInt(finish[2]) && month >= (parseInt(finish[1])-1) && year >= parseInt(finish[0])) {break year;}
+
+            let date = new Date(year,month,day);
+            //Интервалы текущего дня
+            let intervalArray = this.intervals[this.weekIndex[date.getDay()]]['intervals'];
+            //массив длительностей интервалов текущего дня         
+            let curientDayHours:any = [];
+            //Общеее число часов в интервалах за день
+            let totalDayHours:any = 0;
+            //Итерируемся по интервалам текущего дня
+            for(let item in intervalArray){
+              let key:any = Object.keys(intervalArray[item]);
+              let intervalHours  :number =  (parseInt(intervalArray[item][key]['end']) - parseInt(intervalArray[item][key]['begin'])) * 5 *60 ;
+              totalDayHours += intervalHours;
+            //Добавляем интервал
+              curientDayHours.push(intervalHours);
             }
-            else{
-              let date = new Date(year,month,day);
-              //Интервалы текущего дня
-              let intervalArray = this.intervals[this.weekIndex[date.getDay()]]['intervals'];
+            let generatedAverageHours:number = Math.floor((this.hours * 3600) / this.workDayCount);
+            
+            //если среднее кол-во часов для генерации меньше среднего кол-ва рабочих часов
+            if ( generatedAverageHours > this.workDayHoursAverage * 60) { return Promise.reject({error:'Не удается сенерировать указаное колличество часов, превышает дневную норму'});}
+            for(let item in intervalArray){
+              //тип интервала etc конец, начало итд
+              let key:any = Object.keys(intervalArray[item]);
+              //Отношение текущего интервала ко всему временному промежутку в ПРОЦЕНТАХ %
+              let intervalRatioForDay:number = Math.floor(curientDayHours[item] / (this.workDayHoursAverage/100));
+              //вычисляем часть размазаного интревала для данного интервала
+               * TODO точное время размазывания
+              let generatedRatioSecondsforInterval:number = Math.floor((generatedAverageHours/100) * intervalRatioForDay);
+              //Колличество входов - выходо за интервал
+              let RandomEnterExit = getRandomInt(3);
+              let nextEnter = Math.floor(curientDayHours[item] / RandomEnterExit);
+              let nextExit = Math.floor(generatedRatioSecondsforInterval / RandomEnterExit);
+
+              console.log("nextEnter,nextExit",nextEnter,nextExit);
+              //Подсчет даты в формате hh:mm
+              let h:any = timeFormating(intervalArray[item][key]['begin']);
               
-              //массив длительностей интервалов текущего дня         
-              let curientDayHours:any = [];
-              //Общеее число часов в интервалах
-              let totalDayHours:any = 0;
-
-              for(let item in intervalArray){
-                let key:any = Object.keys(intervalArray[item]);
-                //console.log( intervalArray[item][key])
-                let intervalHours:number =  parseInt(intervalArray[item][key]['end']) - parseInt(intervalArray[item][key]['begin']);
-                totalDayHours += intervalHours * 5;
-                //Добавляем интервал
-                curientDayHours.push(intervalHours * 5);
+              let dateMonth:string = month < 10 ? '0' + `${month}` : `${month}`; 
+              let dateDay = day < 10 ? '0' + `${day}` : day;
+              //Время первого входа за интервал
+              let entryDate:string =`${year}:${dateMonth}:${dateDay}:${h}`;
+              //Добавляем дату к событию
+              this.willReplacedByIdsDep.set('sysserver/addDeviceEvent',[ { ['query'] :  {...this.willReplacedByIdsDep.get('sysserver/addDeviceEvent')[0]['query'],...{'date': entryDate } } } ] );
+              //Длбавляем ресурс "ВХОД"
+              this.willReplacedByIdsDep.set('sysserver/addDeviceEvent',[ { ['query'] :  {...this.willReplacedByIdsDep.get('sysserver/addDeviceEvent')[0]['query'],...{'resource': 1 } } } ] );
+              let eventPlcData:any = this.willReplacedByIdsDep.get('sysserver/addDeviceEvent')[0]['query'];
+                
+              //выполняем запрос добавления входа
+              try{
+                await asyncFetch('sysserver/addDeviceEvent',`&${queryParse(eventPlcData)}`,null,null,"PUT");
               }
-              let generatedAverageHours:number = (this.hours * 60) / this.workDayCount
-
-              //если среднее кол-во часов для генерации меньше среднего кол-ва рабочих часов
-              if ( generatedAverageHours < this.workDayHoursAverage){
-                for(let item in intervalArray){
-                  let key:any = Object.keys(intervalArray[item]);
-                  //Отношение текущего интервала ко всему временному промежутку в ПРОЦЕНТАХ %
-                  let intervalRatioForDay:number = Math.floor(curientDayHours[item] / (this.workDayHoursAverage/100));
-                  //вычисляем часть размазаного интревала для данного интервала
-                  /**
-                   * TODO точное время размазывания
-                   */
-                  let generatedRatioMinutesforInterval:number = Math.floor((generatedAverageHours/100) * intervalRatioForDay);
-                  //"Нерабочие" простои в интервале
-                  let emptyIntervalSpace = curientDayHours[item] - generatedRatioMinutesforInterval;
-                  //Колличество входов - выходо за интервал
-                  let RandomEnterExit = getRandomInt(3);
-                  let nextEnter = curientDayHours[item] / RandomEnterExit;
-                  let h:any = Math.floor(intervalArray[item][key]['begin'] * 5 / 60) < 10 ? '0' + `${Math.floor(intervalArray[item][key]['begin'] * 5 / 60)}` : `${Math.floor(intervalArray[item][key]['begin'] * 5 / 60)}`;
-                  let m:any = Math.floor(intervalArray[item][key]['begin'] * 5 ) - (h * 60) < 10 ? '0' + `${Math.floor(intervalArray[item][key]['begin'] * 5 ) - (h * 60)}` : Math.floor(intervalArray[item][key]['begin'] * 5 ) - (h * 60);
-                  
-                  let dateMonth:string = month < 10 ? '0' + `${month}` : `${month}`; 
-                  let dateDay = day < 10 ? '0' + `${day}` : day;
-
-                  let entryDate:string =`${year}:${dateMonth}:${dateDay}:${h}:${m}`;
-                  this.willReplacedByIdsDep.set('sysserver/addDeviceEvent',[ { ['query'] :  {...this.willReplacedByIdsDep.get('sysserver/addDeviceEvent')[0]['query'],...{'date': entryDate } } } ] );
-                  let eventPlcData:any = this.willReplacedByIdsDep.get('sysserver/addDeviceEvent')[0]['query'];
-                  
-                  let query = '&' + queryParse(eventPlcData);
-                  //выполняем запрос
-                  try{
-                    await asyncFetch('sysserver/addDeviceEvent',query,null,null,"PUT");
-                  }
-                  catch(e){
-                    return Promise.reject({error:`${e}`});
-                  }
-                  /*
-                  for (let i = 0;i<RandomEnterExit;i++){
-                    
-                  }
-                  */
-                  //console.log('----',curientDayHours[item],generatedRatioMinutesforInterval,emptyIntervalSpace,this.willReplacedByIdsDep);
-                }  
+              catch(e){
+                return Promise.reject({error:`${e}`});
               }
-            }
+                
+              //остальные входы - входы - за интервал                  
+              for (let i = 0;i<RandomEnterExit;i++){
+                eventPlcData['resource'] = 2;
+                await asyncFetch('sysserver/addDeviceEvent',`&${queryParse(eventPlcData)}`,null,null,"PUT");
+                eventPlcData['resource'] = 1;
+                if (i !== RandomEnterExit - 1) {await asyncFetch('sysserver/addDeviceEvent',`&${queryParse(eventPlcData)}`,null,null,"PUT");}
+              }
+            }  
           }
         }
       }
       this.workDayHoursAverage = (this.totalWorkTime * 5) / this.workDayCount
     }
     catch(e){
-      return Promise.reject({error:`${e}`});
+      return Promise.reject({error:`Не удалось сгенерировать события прохода : ${e}`});
     }
-    return Promise.resolve({msg:'It was willReplacedByIdsDep'});
+    return Promise.resolve({msg:'События прохода сгенерированы'});
+    */
   }
   
   //ORV
   async timeTracking(){
-    console.log('start timetracking');
     let query = `&dateBegin=${this.begin}&dateEnd=${this.end}`;
     try{
       var timeTrackingResult = await asyncFetch('taReports/timetracking',query,null,null,"GET");
@@ -473,6 +479,7 @@ function queryParse(queryTail:any){
   return str;
 }
 
+//Возвращает кол-во дней в месяце
 function checkFebruar(monthNumber:number){
   return (year:number) => {
     if(monthNumber == 1){
@@ -499,11 +506,39 @@ function checkFebruar(monthNumber:number){
 }
 
 function getRandomInt(max:number) {
-  return Math.floor(Math.random() * Math.floor(max));
+  const r = Math.floor(Math.random() * Math.floor(max));
+  return r == 0 ? 1 : r;
 }
 
 async function toSeconds(time:any){
   return typeof time == 'undefined' ? 0 : time.h*3600 + time.m * 60;
+}
+
+function timeFormating(time:number){
+  let h:any = Math.floor(time * 5 / 60) < 10 ? '0' + `${time * 5 / 60}` : `${time * 5 / 60}`;
+  let m:any = Math.floor(time * 5 ) - (h * 60) < 10 ? '0' + `${time * 5  - (h * 60)}` : Math.floor(time * 5 ) - (h * 60);
+  return `${h}:${m}`;
+}
+
+async function dayInterator(begin:any,end:any,func:any){
+  let start  = begin.split('-');
+  let finish = end.split('-');
+  year: 
+  for (let year:any = parseInt(start[0]); year <= parseInt(finish[0]); year++){
+    //Если следующий год - месяц с нуля
+    let month = year > parseInt(start[0]) ? 0 : parseInt(start[1]) - 1;
+
+    for(month; month < 12; month++){
+      let day = parseInt(start[2]);
+      //Если не стартовый год и месяц день с нуля
+      if (month != parseInt(start[1]) && year != parseInt(start[0])){day = 0;}
+
+      for(day; day <= dayCount[month](year); ++day){
+        if(day > parseInt(finish[2]) && month >= (parseInt(finish[1])-1) && year >= parseInt(finish[0])) {break year;}
+        await func(year,month,day);
+      }
+    }
+  }
 }
 
 export function monthlyLauncher(schedule:any){
