@@ -210,9 +210,8 @@ class MonthlyLauncher extends Launcher{
     
     try{
       await dayInterator(this.begin,this.end, async (year:any,month:any,day:any)=>{
-        let date = new Date(parseInt(year),parseInt(month),parseInt(day));
+        let date = new Date(parseInt(year),parseInt(month ) - 1,parseInt(day));
         let intervalArray = this.intervals[this.weekIndex[date.getDay()]]['intervals'];
-  
         if(intervalArray.length != 0) {this.workDayCount++}
   
         for(let item in intervalArray){
@@ -233,7 +232,7 @@ class MonthlyLauncher extends Launcher{
     }
     //minutes
     else if (this.hours * 60 > this.workDayCount * 24 * 60){
-      return Promise.reject({error:'Не возможно сгенерировать больше чем 24 часа в сутки'});
+      return Promise.reject({error:'Не возможно сгенерировать больше чем 24 часа в сутки или генерация производится в нерабочие дни'});
     }
     else{
       return Promise.resolve({msg:"График позволяет сгенерировать рабочее время без переработки"});
@@ -299,7 +298,7 @@ class MonthlyLauncher extends Launcher{
   async addEvent(){
     try{
       await dayInterator(this.begin,this.end, async (year:number,month:number,day:number)=>{
-        let date = new Date(year,month,day);
+        let date = new Date(year,month -1,day);
         let intervalArray = this.intervals[this.weekIndex[date.getDay()]]['intervals'];
   
         if(intervalArray.length != 0){
