@@ -39,7 +39,7 @@ class Launcher{
       return Promise.reject({error:'Не указана дата начала или конца генерации'})
     }
     else{
-      return Promise.resolve({msg:"все хорошо"});
+      return Promise.resolve({msg:"Дата начала и конца иетрвала - корректна"});
     }
   }
   
@@ -63,6 +63,7 @@ class Launcher{
       this.willReplacedByIdsDep.get('users/staff')[0].body.hiring_date = this.begin;
       this.willReplacedByIdsDep.get('users/staff')[0].body.identifier[0].begin_datetime = this.begin;
       this.willReplacedByIdsDep.get('users/staff')[0].body.identifier[0].end_datetime = this.end;
+      this.willReplacedByIdsDep.get('users/staff')[0].body.begin_datetime = this.begin;
       //перебираем методы
       for(let item of this.willReplacedByIdsDep.keys()){
         if (item === "sysserver/addDeviceEvent") continue;
@@ -142,8 +143,6 @@ class MonthlyLauncher extends Launcher{
   undertime:any;
   aceess_zones:any = [];
   schedule_id:any;
-  workEra:any = {};
-
   
   //Общее кол-во часов за промежуток по графику
   totalWorkTime:any = 0;
@@ -193,6 +192,7 @@ class MonthlyLauncher extends Launcher{
     return await super.addMethodsData();
   }
 
+  //Удаление данных из бд
   async deleteDatafromDB():Promise<any>{
     try{  
       await asyncFetch(`taSchedule/${this.schedule_id}`,"",null,null,"DELETE");
@@ -202,7 +202,8 @@ class MonthlyLauncher extends Launcher{
     }
     return await super.deleteDatafromDB();
   }
-
+  
+  //Прверка колличтва генерируемых часов
   async checkAverageWeekHours():Promise<any>{
     if(Object.keys(this.intervals).length == 0) return Promise.reject({error:"Не заданы интервалы"});
 
@@ -272,6 +273,8 @@ class MonthlyLauncher extends Launcher{
       access_zones:access_zone
     }
     
+    console.log("body",body);
+
     //Добавление графика в бд и редактирование сотрудника
     try{
       this.schedule_id = await asyncFetch('taSchedule',"",body,null,'PUT');
@@ -297,16 +300,20 @@ class MonthlyLauncher extends Launcher{
   //Генерация событий прохода
   async addEvent(){
     try{
+      //Итерация по календарному , заданому интервалe
       await dayInterator(this.begin,this.end, async (year:number,month:number,day:number)=>{
+        
         let date = new Date(year,month -1,day);
         let intervalArray = this.intervals[this.weekIndex[date.getDay()]]['intervals'];
-  
+        
+        //Если есть интервалы в графике
         if(intervalArray.length != 0){
+          //итерируемся по интервалам внутри дня графика
           for(let item in intervalArray){
             let key:any = Object.keys(intervalArray[item]);
-            //minutes
+            //рабочего времени в интервале  minutes
             let intervalMinutes:number =  (parseInt(intervalArray[item][key]['end']) - parseInt(intervalArray[item][key]['begin'] )) * 5;
-            //seconds
+            //Часть генерируемого времени для интервала (в % соотношении  время интервала /общее рабочее время ) seconds
             let generatedCurientIntervalSeconds:number = calculateGeneratedInterval(this.totalWorkTime,this.hours,intervalMinutes);
             let randomInterval = getRandomInt(3);
             //Сгенерирование время для интервала меньше чем промежуточный интервал интервала
@@ -335,6 +342,7 @@ class MonthlyLauncher extends Launcher{
                 }
               }
             }
+
           }
         }
       });
@@ -342,7 +350,7 @@ class MonthlyLauncher extends Launcher{
     catch(e){
       return Promise.reject({error:`Ошибка генерирования прохода : ${e}`});
     }
-    return Promise.resolve({msg:'xopowo'})
+    return Promise.resolve({msg:'Проходы сгенерированы'});
   }
   
   //ORV
@@ -354,10 +362,25 @@ class MonthlyLauncher extends Launcher{
     catch(e){
       return Promise.reject({error:`${e}`});
     }
-    console.log("result:",timeTrackingResult);
-    
-    return Promise.resolve({msg:'time done'});
+    let userId:number = typeof this.willReplacedByIdsDep.get('sysserver/addDeviceEvent')[0]['query']['userId'] === 'undefined' ? null : this.willReplacedByIdsDep.get('sysserver/addDeviceEvent')[0]['query']['userId'];
+    if (userId === null) {return Promise.reject({error:'Не возможно подсчитать орв для пользователя'})};
+    let result = JSON.parse(timeTrackingResult)['rows'];
+    let orvtotalTime:any = 0;
+    if (result.length !=0){
+      for(let key of Object.keys(result)){
+        if(result[key]['id'] == userId){
+          let wT = result[key]['work_time'].split(":");
+          orvtotalTime += await toSeconds({h:`${parseInt(wT[0])}`,m:`${parseInt(wT[1])}`});
+        }
+      }
+    }
+    else{
+      return Promise.reject({error:'Нет орв данных'})
+    }
+    console.log('orv:',timeTrackingResult);
+    return Promise.resolve({warning:`сгенерировано часов : ${this.hours} результат ОРВ:${timeFormatingFromSeconds(orvtotalTime)}`});
   }
+
 }
 
 /**
@@ -489,28 +512,20 @@ function timeFormatingFromSeconds(time:number){
 }
 
 //Итератор по календарному интервалу
-async function dayInterator(begin:string,end:string,func:any){
-  let start  = begin.split('-');
-  let finish = end.split('-');
-  year: 
-  for (let year:any = parseInt(start[0]); year <= parseInt(finish[0]); year++){
-    //Если следующий год - месяц с нуля
-    let month = year > parseInt(start[0]) ? 0 : parseInt(start[1]) - 1;
+async function dayInterator(begin:any,end:any,func:any){
+  begin = begin.split('-');
+  end = end.split('-');
+  
+  begin[1] = parseInt(begin[1]) - 1;
+  end[1] = parseInt(end[1]) - 1;
+  
 
-    for(month; month < 12; month++){
-      let day = 1;
-      //Если не стартовый год и месяц день с нуля
-      if (month == parseInt(start[1]) - 1 && year == parseInt(start[0])){day = parseInt(start[2]);}
-      //Если итерация начинается с последнего дня месяца
-      let f = parseInt(finish[2]) == dayCount[month](year) ? dayCount[month](year) + 1 : dayCount[month](year);
-
-      for(day; day <= f;day++){
-        if(day > parseInt(finish[2])  && month >= (parseInt(finish[1])-1) && year >= parseInt(finish[0])) {break year;}
-        let monthFormat = month + 1 < 10 ? '0' + `${month + 1}` : `${month + 1}`;
-        let dayFormat = day < 10 ? '0' + `${day}` : `${day}`;
-        await func(year,monthFormat,dayFormat);
-      }
-    }
+  let start:any  = new Date(begin[0],begin[1],begin[2])//begin.split('-');
+  let finish:any = new Date(end[0],end[1],end[2]);//end.split('-');
+  for (start;start<=finish;start.setDate(start.getDate() + 1)){
+    let month:any = parseInt(start.getMonth()) + 1;
+    month = month < 10 ? '0' + `${month}` : `${month}`; 
+    await func(start.getFullYear(),month,start.getDate());
   }
 }
 
