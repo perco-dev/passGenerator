@@ -204,13 +204,13 @@ class MonthlyLauncher extends Launcher{
   }
 
   async checkAverageWeekHours():Promise<any>{
-    //let start = this.begin.split('-');
-    //let finish = this.end.split('-');
     if(Object.keys(this.intervals).length == 0) return Promise.reject({error:"Не заданы интервалы"});
+
     if(typeof this.hours === 'undefined') return Promise.reject({error:"Не указано колличество часов"});
+    
     try{
-      await dayInterator(this.begin,this.end, async (year:number,month:number,day:number)=>{
-        let date = new Date(year,month,day);
+      await dayInterator(this.begin,this.end, async (year:any,month:any,day:any)=>{
+        let date = new Date(parseInt(year),parseInt(month),parseInt(day));
         let intervalArray = this.intervals[this.weekIndex[date.getDay()]]['intervals'];
   
         if(intervalArray.length != 0) {this.workDayCount++}
@@ -261,7 +261,7 @@ class MonthlyLauncher extends Launcher{
     //формируем боди для добавления графика
     let body = {
       name:this.name,
-      type:2,
+      work_schedule_type_id:2,
       allow_coming_later: `${await toSeconds(this.allow_coming_later)}`,
       allow_leaving_before: `${await toSeconds(this.allow_living_before)}` ,
       overtime:`${await toSeconds(this.overtime)}`,
@@ -297,97 +297,53 @@ class MonthlyLauncher extends Launcher{
 
   //Генерация событий прохода
   async addEvent(){
-    /*
-    let start = this.begin.split('-');
-    let finish = this.end.split('-');
-    
-    //Итерируемся по временному промежутку
     try{
-      year: 
-      for (let year:any = parseInt(start[0]); year <= parseInt(finish[0]); year++){
-        //Если начался новый год  %) - начинаем с нуля , а не с начала интервала
-        let month = year > parseInt(start[0]) ? 0 : parseInt(start[1]) - 1;
-        for(month; month < 12; month++){
-          let day = parseInt(start[2]);
-          //если месяц и год не равны концу интервала итерируемся с первого дня 
-          if (month != parseInt(start[1]) && year != parseInt(start[0])) { day = 0; }
-
-          for(day; day <= this.dayCount[month](year); ++day){
-            //Выходим из цикла если достигли конца интервала
-            if(day > parseInt(finish[2]) && month >= (parseInt(finish[1])-1) && year >= parseInt(finish[0])) {break year;}
-
-            let date = new Date(year,month,day);
-            //Интервалы текущего дня
-            let intervalArray = this.intervals[this.weekIndex[date.getDay()]]['intervals'];
-            //массив длительностей интервалов текущего дня         
-            let curientDayHours:any = [];
-            //Общеее число часов в интервалах за день
-            let totalDayHours:any = 0;
-            //Итерируемся по интервалам текущего дня
-            for(let item in intervalArray){
-              let key:any = Object.keys(intervalArray[item]);
-              let intervalHours  :number =  (parseInt(intervalArray[item][key]['end']) - parseInt(intervalArray[item][key]['begin'])) * 5 *60 ;
-              totalDayHours += intervalHours;
-            //Добавляем интервал
-              curientDayHours.push(intervalHours);
-            }
-            let generatedAverageHours:number = Math.floor((this.hours * 3600) / this.workDayCount);
-            
-            //если среднее кол-во часов для генерации меньше среднего кол-ва рабочих часов
-            if ( generatedAverageHours > this.workDayHoursAverage * 60) { return Promise.reject({error:'Не удается сенерировать указаное колличество часов, превышает дневную норму'});}
-            for(let item in intervalArray){
-              //тип интервала etc конец, начало итд
-              let key:any = Object.keys(intervalArray[item]);
-              //Отношение текущего интервала ко всему временному промежутку в ПРОЦЕНТАХ %
-              let intervalRatioForDay:number = Math.floor(curientDayHours[item] / (this.workDayHoursAverage/100));
-              //вычисляем часть размазаного интревала для данного интервала
-               * TODO точное время размазывания
-              let generatedRatioSecondsforInterval:number = Math.floor((generatedAverageHours/100) * intervalRatioForDay);
-              //Колличество входов - выходо за интервал
-              let RandomEnterExit = getRandomInt(3);
-              let nextEnter = Math.floor(curientDayHours[item] / RandomEnterExit);
-              let nextExit = Math.floor(generatedRatioSecondsforInterval / RandomEnterExit);
-
-              console.log("nextEnter,nextExit",nextEnter,nextExit);
-              //Подсчет даты в формате hh:mm
-              let h:any = timeFormating(intervalArray[item][key]['begin']);
+      await dayInterator(this.begin,this.end, async (year:number,month:number,day:number)=>{
+        let date = new Date(year,month,day);
+        let intervalArray = this.intervals[this.weekIndex[date.getDay()]]['intervals'];
+  
+        if(intervalArray.length != 0){
+          for(let item in intervalArray){
+            let key:any = Object.keys(intervalArray[item]);
+            //minutes
+            let intervalMinutes:number =  (parseInt(intervalArray[item][key]['end']) - parseInt(intervalArray[item][key]['begin'] )) * 5;
+            //seconds
+            let generatedCurientIntervalSeconds:number = calculateGeneratedInterval(this.totalWorkTime,this.hours,intervalMinutes);
+            let randomInterval = getRandomInt(3);
+            //Сгенерирование время для интервала меньше чем промежуточный интервал интервала
+            if ((generatedCurientIntervalSeconds / randomInterval) < ((intervalMinutes * 60) / randomInterval)){
               
-              let dateMonth:string = month < 10 ? '0' + `${month}` : `${month}`; 
-              let dateDay = day < 10 ? '0' + `${day}` : day;
-              //Время первого входа за интервал
-              let entryDate:string =`${year}:${dateMonth}:${dateDay}:${h}`;
-              //Добавляем дату к событию
-              this.willReplacedByIdsDep.set('sysserver/addDeviceEvent',[ { ['query'] :  {...this.willReplacedByIdsDep.get('sysserver/addDeviceEvent')[0]['query'],...{'date': entryDate } } } ] );
-              //Длбавляем ресурс "ВХОД"
-              this.willReplacedByIdsDep.set('sysserver/addDeviceEvent',[ { ['query'] :  {...this.willReplacedByIdsDep.get('sysserver/addDeviceEvent')[0]['query'],...{'resource': 1 } } } ] );
-              let eventPlcData:any = this.willReplacedByIdsDep.get('sysserver/addDeviceEvent')[0]['query'];
-                
-              //выполняем запрос добавления входа
-              try{
-                await asyncFetch('sysserver/addDeviceEvent',`&${queryParse(eventPlcData)}`,null,null,"PUT");
+              let entryTime:any = parseInt(intervalArray[item][key]['begin']) * 5 * 60;
+              let outTime:any = 0;
+              let giInterval = Math.floor(generatedCurientIntervalSeconds / randomInterval);
+              let iInterval = Math.floor(intervalMinutes * 60) / randomInterval;
+
+              let body = this.willReplacedByIdsDep.get('sysserver/addDeviceEvent')[0]['query'];
+              body['date'] = `${year}-${month}-${day}:${timeFormatingFromSeconds(entryTime)}`;
+              body['resource'] = 1;
+              await asyncFetch('sysserver/addDeviceEvent',`&${queryParse(body)}`,null,null,'PUT');
+              
+              for(let i = 0 ;i<randomInterval;i++){
+                outTime = entryTime + giInterval;
+                body['date'] = `${year}-${month}-${day}:${timeFormatingFromSeconds(outTime)}`;
+                body['resource'] = 2;
+                await asyncFetch('sysserver/addDeviceEvent',`&${queryParse(body)}`,null,null,'PUT');
+                if( i != randomInterval - 1){
+                  entryTime += iInterval;
+                  body['date'] = `${year}-${month}-${day}:${timeFormatingFromSeconds(entryTime)}`;
+                  body['resource'] = 1;
+                  await asyncFetch('sysserver/addDeviceEvent',`&${queryParse(body)}`,null,null,'PUT');
+                }
               }
-              catch(e){
-                return Promise.reject({error:`${e}`});
-              }
-                
-              //остальные входы - входы - за интервал                  
-              for (let i = 0;i<RandomEnterExit;i++){
-                eventPlcData['resource'] = 2;
-                await asyncFetch('sysserver/addDeviceEvent',`&${queryParse(eventPlcData)}`,null,null,"PUT");
-                eventPlcData['resource'] = 1;
-                if (i !== RandomEnterExit - 1) {await asyncFetch('sysserver/addDeviceEvent',`&${queryParse(eventPlcData)}`,null,null,"PUT");}
-              }
-            }  
+            }
           }
         }
-      }
-      this.workDayHoursAverage = (this.totalWorkTime * 5) / this.workDayCount
+      });
     }
     catch(e){
-      return Promise.reject({error:`Не удалось сгенерировать события прохода : ${e}`});
+      return Promise.reject({error:`Ошибка генерирования прохода : ${e}`});
     }
-    return Promise.resolve({msg:'События прохода сгенерированы'});
-    */
+    return Promise.resolve({msg:'xopowo'})
   }
   
   //ORV
@@ -443,8 +399,6 @@ async function asyncFetch(item:string,query:string,bodyData:any,methodString:any
     
 
     let responseBody  = await response.text();
-
-    
     // Если айдишник 1
     if(typeof JSON.parse(responseBody).id !== 'undefined'){
       return JSON.parse(responseBody).id;
@@ -459,6 +413,9 @@ async function asyncFetch(item:string,query:string,bodyData:any,methodString:any
     }
     else if(method == 'GET'){
       return responseBody;
+    }
+    else if(typeof JSON.parse(responseBody).error !== 'undefined'){
+      throw new Error('метод вернул error');
     }
   }
   catch(error){
@@ -514,13 +471,26 @@ async function toSeconds(time:any){
   return typeof time == 'undefined' ? 0 : time.h*3600 + time.m * 60;
 }
 
-function timeFormating(time:number){
-  let h:any = Math.floor(time * 5 / 60) < 10 ? '0' + `${time * 5 / 60}` : `${time * 5 / 60}`;
-  let m:any = Math.floor(time * 5 ) - (h * 60) < 10 ? '0' + `${time * 5  - (h * 60)}` : Math.floor(time * 5 ) - (h * 60);
-  return `${h}:${m}`;
+/**
+ * 
+ * @param time время в секундах 
+ * возвращает строку вида чч:мм:сс
+ */
+function timeFormatingFromSeconds(time:number){
+  if (time == 0) return '00:00:00';
+  let h:any = Math.floor(time/3600);
+  let m:any = Math.floor((time - h*3600)/60);
+  let s:any = time - (h *3600) - (m*60);
+
+  h = h < 10 ? '0' + `${h}` : `${h}`;
+  m = m < 10 ? '0' + `${m}` : `${m}`;
+  s = s < 10 ? '0' + `${s}` : `${s}`;
+
+  return `${h}:${m}:${s}`
 }
 
-async function dayInterator(begin:any,end:any,func:any){
+//Итератор по календарному интервалу
+async function dayInterator(begin:string,end:string,func:any){
   let start  = begin.split('-');
   let finish = end.split('-');
   year: 
@@ -529,16 +499,24 @@ async function dayInterator(begin:any,end:any,func:any){
     let month = year > parseInt(start[0]) ? 0 : parseInt(start[1]) - 1;
 
     for(month; month < 12; month++){
-      let day = parseInt(start[2]);
+      let day = 1;
       //Если не стартовый год и месяц день с нуля
-      if (month != parseInt(start[1]) && year != parseInt(start[0])){day = 0;}
+      if (month == parseInt(start[1]) - 1 && year == parseInt(start[0])){day = parseInt(start[2]);}
+      //Если итерация начинается с последнего дня месяца
+      let f = parseInt(finish[2]) == dayCount[month](year) ? dayCount[month](year) + 1 : dayCount[month](year);
 
-      for(day; day <= dayCount[month](year); ++day){
-        if(day > parseInt(finish[2]) && month >= (parseInt(finish[1])-1) && year >= parseInt(finish[0])) {break year;}
-        await func(year,month,day);
+      for(day; day <= f;day++){
+        if(day > parseInt(finish[2])  && month >= (parseInt(finish[1])-1) && year >= parseInt(finish[0])) {break year;}
+        let monthFormat = month + 1 < 10 ? '0' + `${month + 1}` : `${month + 1}`;
+        let dayFormat = day < 10 ? '0' + `${day}` : `${day}`;
+        await func(year,monthFormat,dayFormat);
       }
     }
   }
+}
+
+function calculateGeneratedInterval(totalWorkTime:number,generatedTotalTime:number,intervalTotalMinutes:number){
+  return (generatedTotalTime * 36) * ((intervalTotalMinutes * 60) /  (totalWorkTime * 0.6));
 }
 
 export function monthlyLauncher(schedule:any){
