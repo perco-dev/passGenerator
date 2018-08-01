@@ -10,7 +10,7 @@
           "resourceType":0,
           "data":0,
           "identifier":0,
-          "operatorId":0
+          "operatorId":'users/staff_id_0'
         }
       }
     ],

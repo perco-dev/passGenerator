@@ -315,34 +315,33 @@ class MonthlyLauncher extends Launcher{
             let intervalMinutes:number =  (parseInt(intervalArray[item][key]['end']) - parseInt(intervalArray[item][key]['begin'] )) * 5;
             //Часть генерируемого времени для интервала (в % соотношении  время интервала /общее рабочее время ) seconds
             let generatedCurientIntervalSeconds:number = calculateGeneratedInterval(this.totalWorkTime,this.hours,intervalMinutes);
-            let randomInterval = getRandomInt(3);
-            //Сгенерирование время для интервала меньше чем промежуточный интервал интервала
-            if ((generatedCurientIntervalSeconds / randomInterval) < ((intervalMinutes * 60) / randomInterval)){
-              
+            //ORV не считает секунды поэтому выходим с ошибкой
+            if (generatedCurientIntervalSeconds < 60 ){
+              throw new Error('Генерируемый интервал меньше минуты, уменьшите интервал генерации');
+            }
+            //Достаем данные для события устройства
+            let body = this.willReplacedByIdsDep.get('sysserver/addDeviceEvent')[0]['query'];
+            //Сгенерирование время для интервала меньше чем интервал
+            if (generatedCurientIntervalSeconds < intervalMinutes * 60){
+              //время входа              
               let entryTime:any = parseInt(intervalArray[item][key]['begin']) * 5 * 60;
-              let outTime:any = 0;
-              let giInterval = Math.floor(generatedCurientIntervalSeconds / randomInterval);
-              let iInterval = Math.floor(intervalMinutes * 60) / randomInterval;
-
-              let body = this.willReplacedByIdsDep.get('sysserver/addDeviceEvent')[0]['query'];
+              //время выхода
+              let outTime:any = entryTime + generatedCurientIntervalSeconds;
+              //Устанавливаем время
               body['date'] = `${year}-${month}-${day}:${timeFormatingFromSeconds(entryTime)}`;
+              //тип ресурса - вход
               body['resource'] = 1;
               await asyncFetch('sysserver/addDeviceEvent',`&${queryParse(body)}`,null,null,'PUT');
               
-              for(let i = 0 ;i<randomInterval;i++){
-                outTime = entryTime + giInterval;
-                body['date'] = `${year}-${month}-${day}:${timeFormatingFromSeconds(outTime)}`;
-                body['resource'] = 2;
-                await asyncFetch('sysserver/addDeviceEvent',`&${queryParse(body)}`,null,null,'PUT');
-                if( i != randomInterval - 1){
-                  entryTime += iInterval;
-                  body['date'] = `${year}-${month}-${day}:${timeFormatingFromSeconds(entryTime)}`;
-                  body['resource'] = 1;
-                  await asyncFetch('sysserver/addDeviceEvent',`&${queryParse(body)}`,null,null,'PUT');
-                }
-              }
+              //Устанавливаем время
+              body['date'] = `${year}-${month}-${day}:${timeFormatingFromSeconds(outTime)}`;
+              //тип ресурса - выход
+              body['resource'] = 2;
+              await asyncFetch('sysserver/addDeviceEvent',`&${queryParse(body)}`,null,null,'PUT');
             }
-
+            else if(generatedCurientIntervalSeconds > intervalMinutes * 60){
+              throw new Error('упс, этого я еще не предумал');
+            }
           }
         }
       });
@@ -530,7 +529,7 @@ async function dayInterator(begin:any,end:any,func:any){
 }
 
 function calculateGeneratedInterval(totalWorkTime:number,generatedTotalTime:number,intervalTotalMinutes:number){
-  return (generatedTotalTime * 36) * ((intervalTotalMinutes * 60) /  (totalWorkTime * 0.6));
+  return Math.round((generatedTotalTime * 36) * ((intervalTotalMinutes * 60) / (totalWorkTime * 60 / 100)));
 }
 
 export function monthlyLauncher(schedule:any){
