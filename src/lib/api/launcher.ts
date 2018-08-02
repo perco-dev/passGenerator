@@ -1,6 +1,7 @@
 import 'unfetch/polyfill';
 import * as depend from './dependencies';
 import * as prepare from './boots'
+import { runInThisContext } from 'vm';
 const headers = {'Content-Type':'application/json','Accept': 'application/json'};
 const host = 'http://localhost:8080/api'; 
 let dayCount:any = {
@@ -261,8 +262,8 @@ class MonthlyLauncher extends Launcher{
     let body = {
       name:this.name,
       work_schedule_type_id:2,
-      allow_coming_later: `${await toSeconds(this.allow_coming_later)}`,
-      allow_leaving_before: `${await toSeconds(this.allow_living_before)}` ,
+      allow_coming_later: `${await timeFormatingFromSeconds(toSeconds(this.allow_coming_later))}`,
+      allow_leaving_before: `${await timeFormatingFromSeconds(toSeconds(this.allow_living_before))}` ,
       overtime:`${await toSeconds(this.overtime)}`,
       undertime:`${await toSeconds(this.undertime)}`,
       is_not_holiday: this.is_not_holiday != null ? this.is_not_holiday : false ,
@@ -295,7 +296,7 @@ class MonthlyLauncher extends Launcher{
   }
 
   //Генерация событий прохода
-  async addEvent(){
+  async addEvent():Promise<any>{
     // глпбальная переменная для хранения секунд прохода
     let seconds = 0;
     
@@ -316,10 +317,19 @@ class MonthlyLauncher extends Launcher{
             let intervalMinutes:number =  (parseInt(intervalArray[item][key]['end']) - parseInt(intervalArray[item][key]['begin'] )) * 5;
             //Часть генерируемого времени для интервала (в % соотношении  время интервала /общее рабочее время ) seconds
             let generatedCurientIntervalSeconds:any = calculateGeneratedInterval(this.totalWorkTime,this.hours,intervalMinutes);
+            
+            let allow_coming_later = toSeconds(this.allow_coming_later);
+            let allow_leaving_before = toSeconds(this.allow_living_before);
+
             //время входа
             let entryTime:any = parseInt(intervalArray[item][key]['begin']) * 5 * 60;
             //время выхода
             let generatedCurientInterval:any = timeFormatingFromSeconds(generatedCurientIntervalSeconds + entryTime);
+            //Если есть allow_coming_later
+            if(key[0] == 1 && allow_coming_later != 0 && (allow_coming_later + generatedCurientIntervalSeconds) < intervalMinutes * 60){
+              let factComingLater = Math.floor(getRandomInt(allow_coming_later) / 60);
+              entryTime = entryTime + factComingLater * 60
+            }
             
             seconds += parseInt(generatedCurientInterval.split(':')[2]);
             generatedCurientInterval = generatedCurientInterval.split(':');
@@ -339,7 +349,9 @@ class MonthlyLauncher extends Launcher{
             else{
               generatedCurientInterval[2] = '00'
             }
+            
 
+            //время для создания event
             generatedCurientInterval = generatedCurientInterval.join(':');
             entryTime = timeFormatingFromSeconds(entryTime);
 
@@ -354,7 +366,7 @@ class MonthlyLauncher extends Launcher{
             if (generatedCurientIntervalSeconds < intervalMinutes * 60){
               await generateMinorInterval(body,entryTime,generatedCurientInterval,year,month,day);
             }
-            
+
             else if(generatedCurientIntervalSeconds > intervalMinutes * 60){
               throw new Error('упс, этого я еще не предумал');
             }
@@ -499,10 +511,10 @@ function checkFebruar(monthNumber:number){
 
 function getRandomInt(max:number) {
   const r = Math.floor(Math.random() * Math.floor(max));
-  return r == 0 ? 1 : r;
+  return r; //== 0 ? 1 : r;
 }
 
-async function toSeconds(time:any){
+function toSeconds(time:any){
   return typeof time == 'undefined' ? 0 : time.h*3600 + time.m * 60;
 }
 
