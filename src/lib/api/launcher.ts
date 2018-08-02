@@ -203,13 +203,12 @@ class MonthlyLauncher extends Launcher{
     return await super.deleteDatafromDB();
   }
   
-  //Прверка колличтва генерируемых часов
+  //Прверка колличества генерируемых часов
   async checkAverageWeekHours():Promise<any>{
     if(Object.keys(this.intervals).length == 0) return Promise.reject({error:"Не заданы интервалы"});
-
     if(typeof this.hours === 'undefined') return Promise.reject({error:"Не указано колличество часов"});
-    
     try{
+      //итерируемся по календарному интервалу
       await dayInterator(this.begin,this.end, async (year:any,month:any,day:any)=>{
         let date = new Date(parseInt(year),parseInt(month ) - 1,parseInt(day));
         let intervalArray = this.intervals[this.weekIndex[date.getDay()]]['intervals'];
@@ -229,7 +228,7 @@ class MonthlyLauncher extends Launcher{
 
     //minutes
    if (this.hours * 60 > this.totalWorkTime && this.hours < this.workDayCount * 24 * 60) {
-      return Promise.resolve({warning:'Колличество часов для генерации ,больше чем часов в рабочих промежутках'});
+      return Promise.resolve({warning:'Колличество часов для генерации ,больше часов в рабочих интервалах'});
     }
     //minutes
     else if (this.hours * 60 > this.workDayCount * 24 * 60){
@@ -273,7 +272,7 @@ class MonthlyLauncher extends Launcher{
       access_zones:access_zone
     }
     
-    console.log("body",body);
+    //console.log("body",body);
 
     //Добавление графика в бд и редактирование сотрудника
     try{
@@ -283,12 +282,10 @@ class MonthlyLauncher extends Launcher{
         this.willReplacedByIdsDep.get('users/staff')[0]['body']['work_schedule'] = this.schedule_id;
         //Достаем айдишник сотрудника для ПОСТ метода
         const userId = this.willReplacedByIdsDep.get('sysserver/addDeviceEvent')[0]['query']['userId'];
-        if (typeof userId !=='undefined' ){
-          await asyncFetch(`users/staff/${userId}`,'',this.willReplacedByIdsDep.get('users/staff')[0]['body'],null,'POST')
+        if (typeof userId ==='undefined' ){ 
+          return Promise.reject({error:'Не возможно добавить график для сотрудника userId не найден'});
         }
-        else{
-          return Promise.reject({error:'Не возможно добавить график для сотрудника'})
-        }
+        await asyncFetch(`users/staff/${userId}`,'',this.willReplacedByIdsDep.get('users/staff')[0]['body'],null,'POST')
       }
     }
     catch(e){
@@ -299,46 +296,65 @@ class MonthlyLauncher extends Launcher{
 
   //Генерация событий прохода
   async addEvent(){
+    // глпбальная переменная для хранения секунд прохода
+    let seconds = 0;
+    
     try{
       //Итерация по календарному , заданому интервалe
       await dayInterator(this.begin,this.end, async (year:number,month:number,day:number)=>{
-        
+        //Получаем день недели для графика на конкт\третный день        
         let date = new Date(year,month -1,day);
         let intervalArray = this.intervals[this.weekIndex[date.getDay()]]['intervals'];
         
         //Если есть интервалы в графике
         if(intervalArray.length != 0){
+          let dayIntervalTotal = intervalForDayCount(intervalArray);
           //итерируемся по интервалам внутри дня графика
           for(let item in intervalArray){
             let key:any = Object.keys(intervalArray[item]);
             //рабочего времени в интервале  minutes
             let intervalMinutes:number =  (parseInt(intervalArray[item][key]['end']) - parseInt(intervalArray[item][key]['begin'] )) * 5;
             //Часть генерируемого времени для интервала (в % соотношении  время интервала /общее рабочее время ) seconds
-            let generatedCurientIntervalSeconds:number = calculateGeneratedInterval(this.totalWorkTime,this.hours,intervalMinutes);
+            let generatedCurientIntervalSeconds:any = calculateGeneratedInterval(this.totalWorkTime,this.hours,intervalMinutes);
+            //время входа
+            let entryTime:any = parseInt(intervalArray[item][key]['begin']) * 5 * 60;
+            //время выхода
+            let generatedCurientInterval:any = timeFormatingFromSeconds(generatedCurientIntervalSeconds + entryTime);
+            
+            seconds += parseInt(generatedCurientInterval.split(':')[2]);
+            generatedCurientInterval = generatedCurientInterval.split(':');
+            // добавляем накопившиеся секунды если там есть минута
+            if(Math.floor(seconds/60)>0){
+              //Если из-за добавленной минуты добавился час
+              if(parseInt(generatedCurientInterval[1]) + Math.floor(seconds/60) >= 60){ 
+                generatedCurientInterval[0] = parseInt(generatedCurientInterval[0]) + 1;
+                generatedCurientInterval[1] = parseInt(generatedCurientInterval[1]) + Math.floor(seconds/60) % 60;
+              }
+              else{
+                generatedCurientInterval[1] = parseInt(generatedCurientInterval[1]) + Math.floor(seconds/60);
+              }
+              generatedCurientInterval[2] = '00';
+              seconds -= Math.floor(seconds/60) * 60
+            }
+            else{
+              generatedCurientInterval[2] = '00'
+            }
+
+            generatedCurientInterval = generatedCurientInterval.join(':');
+            entryTime = timeFormatingFromSeconds(entryTime);
+
             //ORV не считает секунды поэтому выходим с ошибкой
             if (generatedCurientIntervalSeconds < 60 ){
               throw new Error('Генерируемый интервал меньше минуты, уменьшите интервал генерации');
             }
             //Достаем данные для события устройства
             let body = this.willReplacedByIdsDep.get('sysserver/addDeviceEvent')[0]['query'];
-            //Сгенерирование время для интервала меньше чем интервал
+
+            //Сгенерированое время для интервала меньше чем интервал
             if (generatedCurientIntervalSeconds < intervalMinutes * 60){
-              //время входа              
-              let entryTime:any = parseInt(intervalArray[item][key]['begin']) * 5 * 60;
-              //время выхода
-              let outTime:any = entryTime + generatedCurientIntervalSeconds;
-              //Устанавливаем время
-              body['date'] = `${year}-${month}-${day}:${timeFormatingFromSeconds(entryTime)}`;
-              //тип ресурса - вход
-              body['resource'] = 1;
-              await asyncFetch('sysserver/addDeviceEvent',`&${queryParse(body)}`,null,null,'PUT');
-              
-              //Устанавливаем время
-              body['date'] = `${year}-${month}-${day}:${timeFormatingFromSeconds(outTime)}`;
-              //тип ресурса - выход
-              body['resource'] = 2;
-              await asyncFetch('sysserver/addDeviceEvent',`&${queryParse(body)}`,null,null,'PUT');
+              await generateMinorInterval(body,entryTime,generatedCurientInterval,year,month,day);
             }
+            
             else if(generatedCurientIntervalSeconds > intervalMinutes * 60){
               throw new Error('упс, этого я еще не предумал');
             }
@@ -361,25 +377,23 @@ class MonthlyLauncher extends Launcher{
     catch(e){
       return Promise.reject({error:`${e}`});
     }
+
     let userId:number = typeof this.willReplacedByIdsDep.get('sysserver/addDeviceEvent')[0]['query']['userId'] === 'undefined' ? null : this.willReplacedByIdsDep.get('sysserver/addDeviceEvent')[0]['query']['userId'];
     if (userId === null) {return Promise.reject({error:'Не возможно подсчитать орв для пользователя'})};
     let result = JSON.parse(timeTrackingResult)['rows'];
     let orvtotalTime:any = 0;
-    if (result.length !=0){
-      for(let key of Object.keys(result)){
-        if(result[key]['id'] == userId){
-          let wT = result[key]['work_time'].split(":");
-          orvtotalTime += await toSeconds({h:`${parseInt(wT[0])}`,m:`${parseInt(wT[1])}`});
-        }
-      }
+    let orvpresenceTime:any = 0;
+    if (result.length !=0 && result[0]['id'] == userId){
+      let pT = result[0]['presence_time'].split(":");
+      let wT = result[0]['work_time'].split(":");
+      orvtotalTime = await toSeconds( { h:`${ parseInt(wT[0]) }`, m:`${ parseInt(wT[1]) }`} );
+      orvpresenceTime = await toSeconds( { h:`${parseInt(pT[0]) }`, m:`${ parseInt(pT[1]) }`} );
+      return Promise.resolve({
+        warning:`сгенерировано часов : ${this.hours} результат ОРВ work_time:${timeFormatingFromSeconds(orvtotalTime)} , presence_time: ${timeFormatingFromSeconds(orvpresenceTime)}`
+      });
     }
-    else{
-      return Promise.reject({error:'Нет орв данных'})
-    }
-    console.log('orv:',timeTrackingResult);
-    return Promise.resolve({warning:`сгенерировано часов : ${this.hours} результат ОРВ:${timeFormatingFromSeconds(orvtotalTime)}`});
+    return Promise.reject({error:'Нет орв данных'});
   }
-
 }
 
 /**
@@ -436,7 +450,7 @@ async function asyncFetch(item:string,query:string,bodyData:any,methodString:any
       return responseBody;
     }
     else if(typeof JSON.parse(responseBody).error !== 'undefined'){
-      throw new Error('метод вернул error');
+      throw new Error(`метод ${item == null ? query : item} вернул ${JSON.parse(responseBody).error}`);
     }
   }
   catch(error){
@@ -501,16 +515,14 @@ function timeFormatingFromSeconds(time:number){
   if (time == 0) return '00:00:00';
   let h:any = Math.floor(time/3600);
   let m:any = Math.floor((time - h*3600)/60);
-  let s:any = time - (h *3600) - (m*60);
+  let s:any = Math.round(time - (h *3600) - (m*60));
 
   h = h < 10 ? '0' + `${h}` : `${h}`;
   m = m < 10 ? '0' + `${m}` : `${m}`;
   s = s < 10 ? '0' + `${s}` : `${s}`;
-
   return `${h}:${m}:${s}`
 }
 
-//Итератор по календарному интервалу
 async function dayInterator(begin:any,end:any,func:any){
   begin = begin.split('-');
   end = end.split('-');
@@ -529,8 +541,41 @@ async function dayInterator(begin:any,end:any,func:any){
 }
 
 function calculateGeneratedInterval(totalWorkTime:number,generatedTotalTime:number,intervalTotalMinutes:number){
-  return Math.round((generatedTotalTime * 36) * ((intervalTotalMinutes * 60) / (totalWorkTime * 60 / 100)));
+  return (generatedTotalTime * 36) * ((intervalTotalMinutes * 60) / (totalWorkTime * 60 / 100));
 }
+
+function intervalForDayCount(intervalArray:any){
+  let totalTime = 0;
+  for (let i in intervalArray){
+    let key:any= Object.keys(intervalArray[i]);
+    totalTime += (intervalArray[i][key]['end'] - intervalArray[i][key]['begin']) * 5 *60;
+  }
+  return totalTime;
+}
+
+async function generateMinorInterval(body:any,entryTime:any,generatedCurientInterval:any,year:any,month:any,day:any){
+  //Устанавливаем время
+  body['date'] = `${year}-${month}-${day}:${entryTime}`;
+  //тип ресурса - вход
+  body['resource'] = 1;
+  try{
+    await asyncFetch('sysserver/addDeviceEvent',`&${queryParse(body)}`,null,null,'PUT');
+  }
+  catch(e){
+    throw new Error(`Не возможно сгенерировать проход: ${e}`);
+  }
+  //Устанавливаем время
+  body['date'] = `${year}-${month}-${day}:${generatedCurientInterval}`;
+  //тип ресурса - выход
+  body['resource'] = 2;
+  try{
+    await asyncFetch('sysserver/addDeviceEvent',`&${queryParse(body)}`,null,null,'PUT');
+  }
+  catch(e){
+    throw new Error(`Не возможно сгенерировать проход: ${e}`);
+  }
+}
+
 
 export function monthlyLauncher(schedule:any){
   return new MonthlyLauncher(schedule);

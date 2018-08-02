@@ -148,7 +148,6 @@ class AutoGenerator extends Component {
     });
 
     //Удаляем данные из бызы после завпросов
-    /*
     await monthlyLauncher.deleteDatafromDB().then(result=>{
       addMsgToTerminal(result);
     }).catch(reason=>{
@@ -156,7 +155,6 @@ class AutoGenerator extends Component {
       this.setState({open:true});
       throw new Error();
     });
-    */
     // Показываем результат
     this.setState({
       open:true
