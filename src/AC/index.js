@@ -24,3 +24,10 @@ export function addMsgToTerminal(value){
     payload: value
   }
 }
+
+export function changeServer(value){
+  return {
+    type: 'SERVER',
+    payload: value
+  }
+}

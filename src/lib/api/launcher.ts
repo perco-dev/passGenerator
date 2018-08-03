@@ -588,7 +588,6 @@ async function generateMinorInterval(body:any,entryTime:any,generatedCurientInte
   }
 }
 
-async function generateMajorInterval(){}
 
 export async function workTimeCounter(intervals:any,beginDate:any,endDate:any){
   const weekIndex:any = {0:'sunday',1:'monday',2:'tuesday',3:'wednesday',4:'thursday',5:'friday',6:'saturday'};

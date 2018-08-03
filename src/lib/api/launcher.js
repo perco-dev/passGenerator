@@ -576,9 +576,6 @@ function generateMinorInterval(body, entryTime, generatedCurientInterval, year, 
         }
     });
 }
-function generateMajorInterval() {
-    return __awaiter(this, void 0, void 0, function* () { });
-}
 function workTimeCounter(intervals, beginDate, endDate) {
     return __awaiter(this, void 0, void 0, function* () {
         const weekIndex = { 0: 'sunday', 1: 'monday', 2: 'tuesday', 3: 'wednesday', 4: 'thursday', 5: 'friday', 6: 'saturday' };
