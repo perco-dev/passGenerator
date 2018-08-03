@@ -24,7 +24,7 @@ class MontlyIntervalChanger extends Component {
     this.type = this.props.type;
 
     this.state = {
-      interval:0,
+      interval:1,
       week:{
         monday:{active:true,intervals:[]},
         tuesday:{active:false,intervals:[]},
