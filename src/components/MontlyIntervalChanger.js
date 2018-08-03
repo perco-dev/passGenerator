@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 //import { changeScheduleValue } from '../AC';
 //import {connect} from 'react-redux';
+import {workTimeCounter}  from '../lib/api/launcher';
 import { findDOMNode } from 'react-dom';
 import { Range } from 'rc-slider';
 import 'rc-slider/assets/index.css';
@@ -127,9 +128,9 @@ class MontlyIntervalChanger extends Component {
           <button className="btn btn-outline" type="button" onClick = {this.addInput}>Добавить интервал</button>
         </div>
         <select className="custom-select col-4" onChange={e=>{this.setState({interval:e.target.value})}}>
-          <option selected value="0">интервал</option>
-          <option value="1">начало смены</option>
-          <option value="2">конец смена</option>
+          <option selected value="1">начало смены</option>
+          <option value="0">интервал</option>
+          <option value="2">конец смены</option>
           <option value="3">полная смена</option>
         </select>
         <button type='button' className = 'btn btn-success'  style={{'margin-left':'50px'}}onClick={this.sentSchedule}>записать интервалы</button>
@@ -176,23 +177,23 @@ class MontlyIntervalChanger extends Component {
       const intervalType = this.state.interval;
 
       //Начальный интервал
-      if(intervalType == 0){
+      if(intervalType == 1){
         if(intervals.length != 0){
           alert('Начало смены не может начиинаться после интервала');
           return null;
         }
       }
       //Конечный интервал
-      else if(intervalType == 1) {
+      else if(intervalType == 2) {
         let begin = false;
         for (let item of intervals){
           let type = Object.keys(item)[0];
           //Если существует конечный или полный
-          if(type == 1 || type == 2){
+          if(type == 2 || type == 3){
             alert("Конец интервала не может быть добавлен после полной смены или продублирован"); 
             return null;
           }
-          if(type == 0){
+          if(type == 1){
             begin = true
           }
         }
@@ -204,28 +205,32 @@ class MontlyIntervalChanger extends Component {
       }
       
       //Полная смена
-      else if(intervalType == 2){
+      else if(intervalType == 3){
         if(intervals.length != 0){
           alert('Полная смена не может начинаться после интервала');
           return null;
         }
       }
       
-      else if(intervalType == 3){
+      else if(intervalType == 0){
+        if(intervals.length == 0){
+          alert('Добавьте начало или полную смену'); 
+          return null;
+        } 
         for(let item of intervals){
           let type = Object.keys(item)[0];
-          if(type == 1 || type == 2){
+          if(type == 2 || type == 3){
             alert('Не возможно добавить интервал после конца схемы'); return null;
           }
         }
       }
 
-      //Следующий ингтервал начинается с конца предыдущего
+      //Следующий интервал начинается с конца предыдущего
       let min = null;
       if(intervals.length > 0){
         for(let i=intervals.length-1;i>=0;i--){
           let key = Object.keys(intervals[i])[0]
-          if(key!=1){
+          if(key!=3){
             min = intervals[i][key].end
             break;
           }
@@ -312,10 +317,14 @@ class MontlyIntervalChanger extends Component {
     return null;
   }
 
-  sentSchedule = () =>{
+  sentSchedule = async () =>{
+    //let popover = workTimeCounter;
     const {changeScheduleValueComplex} = this.props;
     const intervals = {intervals:this.state.week};
     changeScheduleValueComplex(intervals);
+    //const {beginDate} = this.props.schedule;
+    //const {endDate}   = this.props.schedule;
+    //await popover(intervals,beginDate,endDate);
   }
   
   

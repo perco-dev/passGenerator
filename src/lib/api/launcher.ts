@@ -309,24 +309,30 @@ class MonthlyLauncher extends Launcher{
         
         //Если есть интервалы в графике
         if(intervalArray.length != 0){
-          let dayIntervalTotal = intervalForDayCount(intervalArray);
+          let dayIntervalTotal:any = intervalForDayCount(intervalArray);
+          let generatedCurientIntervalRest:any = 0;
+
           //итерируемся по интервалам внутри дня графика
           for(let item in intervalArray){
             let key:any = Object.keys(intervalArray[item]);
             //рабочего времени в интервале  minutes
             let intervalMinutes:number =  (parseInt(intervalArray[item][key]['end']) - parseInt(intervalArray[item][key]['begin'] )) * 5;
             //Часть генерируемого времени для интервала (в % соотношении  время интервала /общее рабочее время ) seconds
-            let generatedCurientIntervalSeconds:any = calculateGeneratedInterval(this.totalWorkTime,this.hours,intervalMinutes);
+            let generatedCurientIntervalSeconds:any = calculateGeneratedInterval(this.totalWorkTime,this.hours,intervalMinutes) + generatedCurientIntervalRest;
+            //Если генерируемый интервал больше рабочего
+            if (intervalMinutes * 60 < generatedCurientIntervalSeconds && key[0] != 2 && key[0] != 3){
+              generatedCurientIntervalRest += generatedCurientIntervalSeconds - intervalMinutes * 60;
+              generatedCurientIntervalSeconds = intervalMinutes * 60;
+            }
             
             let allow_coming_later = toSeconds(this.allow_coming_later);
-            let allow_leaving_before = toSeconds(this.allow_living_before);
 
             //время входа
             let entryTime:any = parseInt(intervalArray[item][key]['begin']) * 5 * 60;
             //время выхода
             let generatedCurientInterval:any = timeFormatingFromSeconds(generatedCurientIntervalSeconds + entryTime);
             //Если есть allow_coming_later
-            if(key[0] == 1 && allow_coming_later != 0 && (allow_coming_later + generatedCurientIntervalSeconds) < intervalMinutes * 60){
+            if(key[0] == 1 || key[0] == 3 && allow_coming_later != 0 && (allow_coming_later + generatedCurientIntervalSeconds) < intervalMinutes * 60){
               let factComingLater = Math.floor(getRandomInt(allow_coming_later) / 60);
               entryTime = entryTime + factComingLater * 60
             }
@@ -350,7 +356,6 @@ class MonthlyLauncher extends Launcher{
               generatedCurientInterval[2] = '00'
             }
             
-
             //время для создания event
             generatedCurientInterval = generatedCurientInterval.join(':');
             entryTime = timeFormatingFromSeconds(entryTime);
@@ -363,13 +368,8 @@ class MonthlyLauncher extends Launcher{
             let body = this.willReplacedByIdsDep.get('sysserver/addDeviceEvent')[0]['query'];
 
             //Сгенерированое время для интервала меньше чем интервал
-            if (generatedCurientIntervalSeconds < intervalMinutes * 60){
-              await generateMinorInterval(body,entryTime,generatedCurientInterval,year,month,day);
-            }
+            await generateMinorInterval(body,entryTime,generatedCurientInterval,year,month,day);
 
-            else if(generatedCurientIntervalSeconds > intervalMinutes * 60){
-              throw new Error('упс, этого я еще не предумал');
-            }
           }
         }
       });
@@ -588,6 +588,40 @@ async function generateMinorInterval(body:any,entryTime:any,generatedCurientInte
   }
 }
 
+async function generateMajorInterval(){}
+
+export async function workTimeCounter(intervals:any,beginDate:any,endDate:any){
+  const weekIndex:any = {0:'sunday',1:'monday',2:'tuesday',3:'wednesday',4:'thursday',5:'friday',6:'saturday'};
+  let wH = 0;
+  
+  let iIntervals:any = {intervals:[]}
+  
+  for(let day of Object.keys(intervals)){
+    console.log(day);
+    let dayObj:any = {desk:`${day}`,'intervals':[]}
+    for(let interval in intervals[day]['intervals']){
+      let key:string = Object.keys(intervals[day]['intervals'][interval])[0];
+      dayObj['intervals'].push({
+        type: parseInt(key),
+        begin: intervals [ day ] [ 'intervals' ] [interval] [ key ] [ 'begin' ] * 5 * 60 ,
+        end: intervals [ day ] [ 'intervals' ] [interval] [ key ] [ 'end' ] * 5 * 60 ,
+      });
+    }
+    iIntervals['intervals'].push(dayObj);
+  }
+
+  dayInterator(beginDate,endDate,(year:number,month:number,day:number,iIntervals:any)=>{
+    let date = new Date(year,month -1,day);
+    console.log(iIntervals);
+    let intervalArray = iIntervals[weekIndex[date.getDay()]]['intervals'];
+    console.log(intervalArray);
+    //Если есть интервалы в графике
+    if(intervalArray.length != 0){
+      wH +=  intervalForDayCount(intervalArray)
+    }
+  });
+  return wH;
+}
 
 export function monthlyLauncher(schedule:any){
   return new MonthlyLauncher(schedule);

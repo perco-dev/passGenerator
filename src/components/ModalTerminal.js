@@ -31,7 +31,7 @@ class ModalTerminal extends Component {
           <output className="col-12" 
             style = {{
               'backgroundColor':'#F0F0F0',
-              'height':`${window.innerHeight/2 - 50}px`,
+              'height':`${window.innerHeight/3 - 50}px`,
               'border':'3px inset #E8E8E8',
               'overflow':'scroll'
             }}>
