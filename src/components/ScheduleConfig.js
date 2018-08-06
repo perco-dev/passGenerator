@@ -86,7 +86,7 @@ class ScheduleConfig extends Component {
             <input type='checkbox' className='form-control col-1' onChange={changeValue('is_not_holiday')}/>
           </div>
           <div className = 'col-md-3'>
-            <label >ПервоНах</label>
+            <label >Первый вход - последний выход</label>
             <input type='checkbox' className='form-control col-1' onChange={changeValue('is_first_input_last_output')}/>
           </div>
           <div className = 'form-group col-md-8'> 
