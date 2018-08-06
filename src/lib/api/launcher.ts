@@ -1,7 +1,6 @@
 import 'unfetch/polyfill';
 import * as depend from './dependencies';
 import * as prepare from './boots'
-import { runInThisContext } from 'vm';
 const headers = {'Content-Type':'application/json','Accept': 'application/json'};
 const host = 'http://localhost:8080/api'; 
 let dayCount:any = {
@@ -23,13 +22,12 @@ class Launcher{
   begin: any;
   end: any;
 
-  idsMap:any = new Map();
   dependencies: any = depend.default;
 
   protected willReplacedByIdsDep:any
+  protected idsMap:any = new Map();
 
   constructor(store:any){
-
     this.begin = store.beginDate;
     this.end = store.endDate;
   }
@@ -113,18 +111,9 @@ class Launcher{
     }
     return Promise.resolve({msg:`методы ${methodsComplete} завершены успешно`});
   }
-
-  //Удаляем данные из БД + детачим контроллер
-  async deleteDatafromDB():Promise<any>{
-    let methodsComplete:any = [];
-    try{
-      await asyncFetch(`devices/${this.idsMap.get('devices')[0]}/detach`,"",null,null,"POST")
-      methodsComplete = await deleteDependencies(this.idsMap);
-    }
-    catch(e){
-      return Promise.reject({error:`Не удалось удалить данные : ${e}`});
-    }
-    return Promise.resolve({msg:`методы ${methodsComplete} завершены успешно, удалите юзера и подразделение самостоятельно !!!`});
+  
+  getIds(){
+    return this.idsMap;
   }
 }
 
@@ -144,6 +133,7 @@ class MonthlyLauncher extends Launcher{
   undertime:any;
   aceess_zones:any = [];
   schedule_id:any;
+  removeDataAfterComplete:any;
   
   //Общее кол-во часов за промежуток по графику
   totalWorkTime:any = 0;
@@ -154,6 +144,7 @@ class MonthlyLauncher extends Launcher{
   weekIndex:any = {0:'sunday',1:'monday',2:'tuesday',3:'wednesday',4:'thursday',5:'friday',6:'saturday'};
   
   willReplacedByIdsDep:any
+  idsMap:any;
   
   constructor(store:any){
     super(store);
@@ -169,7 +160,8 @@ class MonthlyLauncher extends Launcher{
     this.is_not_holiday = store.is_not_holiday;
     this.name = store.name;
     this.overtime = store.overtime;
-    this.undertime = store.undertime
+    this.undertime = store.undertime;
+    this.removeDataAfterComplete = store.removeDataAfterComplete;
   }
   
   async checkDates():Promise<any>{
@@ -193,15 +185,9 @@ class MonthlyLauncher extends Launcher{
     return await super.addMethodsData();
   }
 
-  //Удаление данных из бд
-  async deleteDatafromDB():Promise<any>{
-    try{  
-      await asyncFetch(`taSchedule/${this.schedule_id}`,"",null,null,"DELETE");
-    }
-    catch(e){
-      return Promise.reject({error:`Не возможно удалить график : ${e}`});
-    }
-    return await super.deleteDatafromDB();
+  getIds(){
+    this.idsMap.set('taSchedule',[this.schedule_id]);
+    return super.getIds();
   }
   
   //Прверка колличества генерируемых часов
@@ -588,7 +574,18 @@ async function generateMinorInterval(body:any,entryTime:any,generatedCurientInte
   }
 }
 
-
+export async function deleteDataAfterComplete(idsMap:any):Promise<any>{
+  if(idsMap.size == 0) {return Promise.reject({error:"Отсутствуют данные для удаления"});}
+  console.log(idsMap);
+  try{
+    await asyncFetch(`devices/${idsMap.get('devices')[0]}/detach`,"",null,null,"POST")
+    await deleteDependencies(idsMap);
+  }
+  catch(e){
+    return Promise.reject({error:`Не удалось удалить данные ${e}`});
+  }
+  return Promise.resolve({msg:'Данные удалены,удалите пользователя и подразделения в ручную'});
+}
 export async function workTimeCounter(intervals:any,beginDate:any,endDate:any){
   const weekIndex:any = {0:'sunday',1:'monday',2:'tuesday',3:'wednesday',4:'thursday',5:'friday',6:'saturday'};
   let wH = 0;

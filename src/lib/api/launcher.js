@@ -29,8 +29,8 @@ let dayCount = {
 };
 class Launcher {
     constructor(store) {
-        this.idsMap = new Map();
         this.dependencies = depend.default;
+        this.idsMap = new Map();
         this.begin = store.beginDate;
         this.end = store.endDate;
     }
@@ -115,19 +115,8 @@ class Launcher {
             return Promise.resolve({ msg: `методы ${methodsComplete} завершены успешно` });
         });
     }
-    //Удаляем данные из БД + детачим контроллер
-    deleteDatafromDB() {
-        return __awaiter(this, void 0, void 0, function* () {
-            let methodsComplete = [];
-            try {
-                yield asyncFetch(`devices/${this.idsMap.get('devices')[0]}/detach`, "", null, null, "POST");
-                methodsComplete = yield deleteDependencies(this.idsMap);
-            }
-            catch (e) {
-                return Promise.reject({ error: `Не удалось удалить данные : ${e}` });
-            }
-            return Promise.resolve({ msg: `методы ${methodsComplete} завершены успешно, удалите юзера и подразделение самостоятельно !!!` });
-        });
+    getIds() {
+        return this.idsMap;
     }
 }
 class MonthlyLauncher extends Launcher {
@@ -153,6 +142,7 @@ class MonthlyLauncher extends Launcher {
         this.name = store.name;
         this.overtime = store.overtime;
         this.undertime = store.undertime;
+        this.removeDataAfterComplete = store.removeDataAfterComplete;
     }
     checkDates() {
         const _super = name => super[name];
@@ -181,18 +171,9 @@ class MonthlyLauncher extends Launcher {
             return yield _super("addMethodsData").call(this);
         });
     }
-    //Удаление данных из бд
-    deleteDatafromDB() {
-        const _super = name => super[name];
-        return __awaiter(this, void 0, void 0, function* () {
-            try {
-                yield asyncFetch(`taSchedule/${this.schedule_id}`, "", null, null, "DELETE");
-            }
-            catch (e) {
-                return Promise.reject({ error: `Не возможно удалить график : ${e}` });
-            }
-            return yield _super("deleteDatafromDB").call(this);
-        });
+    getIds() {
+        this.idsMap.set('taSchedule', [this.schedule_id]);
+        return super.getIds();
     }
     //Прверка колличества генерируемых часов
     checkAverageWeekHours() {
@@ -576,6 +557,23 @@ function generateMinorInterval(body, entryTime, generatedCurientInterval, year, 
         }
     });
 }
+function deleteDataAfterComplete(idsMap) {
+    return __awaiter(this, void 0, void 0, function* () {
+        if (idsMap.size == 0) {
+            return Promise.reject({ error: "Отсутствуют данные для удаления" });
+        }
+        console.log(idsMap);
+        try {
+            yield asyncFetch(`devices/${idsMap.get('devices')[0]}/detach`, "", null, null, "POST");
+            yield deleteDependencies(idsMap);
+        }
+        catch (e) {
+            return Promise.reject({ error: `Не удалось удалить данные ${e}` });
+        }
+        return Promise.resolve({ msg: 'Данные удалены,удалите пользователя и подразделения в ручную' });
+    });
+}
+exports.deleteDataAfterComplete = deleteDataAfterComplete;
 function workTimeCounter(intervals, beginDate, endDate) {
     return __awaiter(this, void 0, void 0, function* () {
         const weekIndex = { 0: 'sunday', 1: 'monday', 2: 'tuesday', 3: 'wednesday', 4: 'thursday', 5: 'friday', 6: 'saturday' };

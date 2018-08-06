@@ -63,7 +63,7 @@ class ScheduleConfig extends Component {
             <div className='row'>
               <div className='col-4'>
                 <input type='number' min='0' max='24'  className = 'form-control' onChange = {changeValue('undertime','h')}/>
-              </div>:
+              </div>
               <div className='col-4'>
                 <input type='number' min='0' max='60' className = 'form-control' onChange = {changeValue('undertime','m')}/>
               </div>

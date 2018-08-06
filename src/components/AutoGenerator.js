@@ -6,6 +6,7 @@ import { findDOMNode } from 'react-dom';
 
 import ModalTerminal from './ModalTerminal';
 import * as launcher  from '../lib/api/launcher';
+import {deleteDataAfterComplete} from '../lib/api/launcher';
 import ScheduleConfig from './ScheduleConfig';
 
 class AutoGenerator extends Component {
@@ -20,7 +21,7 @@ class AutoGenerator extends Component {
   }
 
   render() {
-   //console.log("AUTO",this.props);
+    //console.log("AUTO",this.props);
     return(
       <form>
         <div className = 'form-row'>
@@ -45,9 +46,18 @@ class AutoGenerator extends Component {
             <input type='number' className='form-control' onChange = {this.changeValue('hours')} value = {this.props.schedule.hours}/>
           </div>
         </div>
+        <div className="form-row">
+          <div className="form-group col-md-3">
+            <label>Автоматическое удаление данных</label>
+            <input type='checkbox' className='form-control col-1' value="false" onChange={this.changeRemoveAfterComplete}/>
+          </div>
+          <div className="form-group col-md-3">
+            <button type='button' className='btn btn-primary' onClick={this.deleteMiddleMethodData}>Удалить в ручную</button>
+          </div>
+        </div>
         <hr style = {{'border': 'none','background-color':'rgb(230, 230, 230)','color': 'red','height': '2px'}}/>
           <ScheduleConfig changeValue = {this.changeValue} type = {this.props.schedule.scheduleType}/>
-          <button type='button' className='btn btn-primary' onClick = {this.onSubmit}>CLARITAS</button>
+          <button type='button' className='btn btn-primary' onClick = {this.onSubmit}>Генерация</button>
           <ModalTerminal terminal = {this.props.terminal} open = {this.state.open} closeModal = {this.closeModal}/>
       </form>
     )
@@ -57,6 +67,13 @@ class AutoGenerator extends Component {
     this.setState({
       open:false
     })
+  }
+
+  //отдельная ф-ия для чекера
+  changeRemoveAfterComplete = () =>{
+    const {changeScheduleValueSimple} = this.props;
+    let {removeDataAfterComplete} = this.props.schedule;
+    removeDataAfterComplete === true ? changeScheduleValueSimple({'removeDataAfterComplete':false}) : changeScheduleValueSimple({'removeDataAfterComplete':true});
   }
 
   changeValue = (field,option) => e =>{
@@ -77,16 +94,31 @@ class AutoGenerator extends Component {
     return findDOMNode(ref)
   }
 
+  deleteMiddleMethodData = async () =>{
+    const {idsMap} = this.props.schedule;
+    const {addMsgToTerminal} = this.props
+    await deleteDataAfterComplete(idsMap).then(result=>{
+      addMsgToTerminal(result);
+    }).catch(reason=>{
+      addMsgToTerminal(reason);
+      this.setState({open:true});
+      throw new Error();
+    });
+  }
+
   onSubmit = async() => {
+    const {changeScheduleValueSimple} = this.props
     const {schedule} = this.props;
     const {addMsgToTerminal} = this.props;
+    const {removeDataAfterComplete} = this.props.schedule
     let monthlyLauncher = launcher.monthlyLauncher(schedule);
 
     //Проверка формата даты
     await monthlyLauncher.checkDates().then(result=>{
       addMsgToTerminal(result);
+      this.setState({open:true});
     }).catch(reason=>{
-      addMsgToTerminal(reason)
+      addMsgToTerminal(reason);
       this.setState({open:true});
       throw new Error();
     });
@@ -100,8 +132,6 @@ class AutoGenerator extends Component {
       throw new Error();
     });
     
-    
-
     //Формирование списка зависимых методов для генерации событий прохода
     await monthlyLauncher.dependenciesListForming().then(result=>{
       addMsgToTerminal(result);
@@ -138,7 +168,23 @@ class AutoGenerator extends Component {
       throw new Error();
     });
 
+    let idsMap = await monthlyLauncher.getIds();
+    
+    if(removeDataAfterComplete == true){
+      await deleteDataAfterComplete(idsMap).then(result=>{
+        addMsgToTerminal(result)
+      }).catch(reason=>{
+        addMsgToTerminal(reason);
+        this.setState({open:true});
+        throw new Error();
+      });
+    }
+    else{
+      changeScheduleValueSimple({'idsMap':idsMap});
+    }
+
     //Запуск ОРВ
+    /*
     await monthlyLauncher.timeTracking().then(result=>{
       addMsgToTerminal(result);
     }).catch(reason=>{
@@ -146,15 +192,8 @@ class AutoGenerator extends Component {
       this.setState({open:true});
       throw new Error();
     });
-
-    //Удаляем данные из бызы после завпросов
-    await monthlyLauncher.deleteDatafromDB().then(result=>{
-      addMsgToTerminal(result);
-    }).catch(reason=>{
-      addMsgToTerminal(reason);
-      this.setState({open:true});
-      throw new Error();
-    });
+    */
+   
     // Показываем результат
     this.setState({
       open:true
