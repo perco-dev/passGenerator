@@ -1,6 +1,5 @@
-export default (server = 'localhost',action) => {
+export default (server = 'localhost:8080',action) => {
   const {type} = action;
-  
   switch(type){
     case 'SERVER' : {
       return server = action.payload

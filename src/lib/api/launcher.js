@@ -12,7 +12,7 @@ require("unfetch/polyfill");
 const depend = require("./dependencies");
 const prepare = require("./boots");
 const headers = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
-const host = 'http://localhost:8080/api';
+//const host = 'http://localhost:8080/api'; 
 let dayCount = {
     0: checkFebruar(0),
     1: checkFebruar(1),
@@ -28,11 +28,12 @@ let dayCount = {
     11: checkFebruar(11),
 };
 class Launcher {
-    constructor(store) {
+    constructor(store, server) {
         this.dependencies = depend.default;
         this.idsMap = new Map();
         this.begin = store.beginDate;
         this.end = store.endDate;
+        this.host = `http://${server}/api`;
     }
     //Валидация начала и конца генерации
     checkDates() {
@@ -99,7 +100,7 @@ class Launcher {
                         //Метод POST || PUT
                         let method = typeof this.dependencies[`${item}`].method === 'undefined' ? "PUT" : this.dependencies[`${item}`].method;
                         //выполняем запрос
-                        var id = yield asyncFetch(item, query, bodyData, methodString, method);
+                        var id = yield asyncFetch(item, query, bodyData, methodString, method, this.host);
                         methodsComplete.push(item);
                     }
                     //если в респонсе есть айди добавляем его в idsMap и вставляем значение в зависимости
@@ -120,8 +121,8 @@ class Launcher {
     }
 }
 class MonthlyLauncher extends Launcher {
-    constructor(store) {
-        super(store);
+    constructor(store, server) {
+        super(store, server);
         this.aceess_zones = [];
         //Общее кол-во часов за промежуток по графику
         this.totalWorkTime = 0;
@@ -129,6 +130,7 @@ class MonthlyLauncher extends Launcher {
         this.workDayCount = 0;
         //Среднее кол-во часов врабочем дне по графику
         this.weekIndex = { 0: 'sunday', 1: 'monday', 2: 'tuesday', 3: 'wednesday', 4: 'thursday', 5: 'friday', 6: 'saturday' };
+        this.host = `http://${server}/api`;
         this.willReplacedByIdsDep = super.willReplacedByIdsDep;
         this.begin = store.beginDate;
         this.end = store.endDate;
@@ -249,7 +251,7 @@ class MonthlyLauncher extends Launcher {
             //console.log("body",body);
             //Добавление графика в бд и редактирование сотрудника
             try {
-                this.schedule_id = yield asyncFetch('taSchedule', "", body, null, 'PUT');
+                this.schedule_id = yield asyncFetch('taSchedule', "", body, null, 'PUT', this.host);
                 if (typeof this.schedule_id !== 'undefined') {
                     //добавляем график для в карту с данными
                     this.willReplacedByIdsDep.get('users/staff')[0]['body']['work_schedule'] = this.schedule_id;
@@ -258,7 +260,7 @@ class MonthlyLauncher extends Launcher {
                     if (typeof userId === 'undefined') {
                         return Promise.reject({ error: 'Не возможно добавить график для сотрудника userId не найден' });
                     }
-                    yield asyncFetch(`users/staff/${userId}`, '', this.willReplacedByIdsDep.get('users/staff')[0]['body'], null, 'POST');
+                    yield asyncFetch(`users/staff/${userId}`, '', this.willReplacedByIdsDep.get('users/staff')[0]['body'], null, 'POST', this.host);
                 }
             }
             catch (e) {
@@ -332,7 +334,7 @@ class MonthlyLauncher extends Launcher {
                             //Достаем данные для события устройства
                             let body = this.willReplacedByIdsDep.get('sysserver/addDeviceEvent')[0]['query'];
                             //Сгенерированое время для интервала меньше чем интервал
-                            yield generateMinorInterval(body, entryTime, generatedCurientInterval, year, month, day);
+                            yield generateMinorInterval(body, entryTime, generatedCurientInterval, year, month, day, this.host);
                         }
                     }
                 }));
@@ -348,7 +350,7 @@ class MonthlyLauncher extends Launcher {
         return __awaiter(this, void 0, void 0, function* () {
             let query = `&dateBegin=${this.begin}&dateEnd=${this.end}`;
             try {
-                var timeTrackingResult = yield asyncFetch('taReports/timetracking', query, null, null, "GET");
+                var timeTrackingResult = yield asyncFetch('taReports/timetracking', query, null, null, "GET", this.host);
             }
             catch (e) {
                 return Promise.reject({ error: `${e}` });
@@ -378,13 +380,13 @@ class MonthlyLauncher extends Launcher {
  * @param ids массив типа метод - id
  * возвращает void
  */
-function deleteDependencies(ids) {
+function deleteDependencies(ids, host) {
     return __awaiter(this, void 0, void 0, function* () {
         let methodsComplete = [];
         for (let item of ids.keys()) {
             if (item !== 'divisions' && item !== 'users/staff' && item !== 'devices/{id}/attach') {
                 for (let key in ids.get(item)) {
-                    yield asyncFetch(item, "", null, `${item}/${ids.get(item)[key]}`, "DELETE");
+                    yield asyncFetch(item, "", null, `${item}/${ids.get(item)[key]}`, "DELETE", host);
                 }
                 methodsComplete.push(item);
             }
@@ -392,7 +394,7 @@ function deleteDependencies(ids) {
         return methodsComplete;
     });
 }
-function asyncFetch(item, query, bodyData, methodString, method) {
+function asyncFetch(item, query, bodyData, methodString, method, host) {
     return __awaiter(this, void 0, void 0, function* () {
         let response;
         try {
@@ -533,14 +535,14 @@ function intervalForDayCount(intervalArray) {
     }
     return totalTime;
 }
-function generateMinorInterval(body, entryTime, generatedCurientInterval, year, month, day) {
+function generateMinorInterval(body, entryTime, generatedCurientInterval, year, month, day, host) {
     return __awaiter(this, void 0, void 0, function* () {
         //Устанавливаем время
         body['date'] = `${year}-${month}-${day}:${entryTime}`;
         //тип ресурса - вход
         body['resource'] = 1;
         try {
-            yield asyncFetch('sysserver/addDeviceEvent', `&${queryParse(body)}`, null, null, 'PUT');
+            yield asyncFetch('sysserver/addDeviceEvent', `&${queryParse(body)}`, null, null, 'PUT', host);
         }
         catch (e) {
             throw new Error(`Не возможно сгенерировать проход: ${e}`);
@@ -550,22 +552,23 @@ function generateMinorInterval(body, entryTime, generatedCurientInterval, year, 
         //тип ресурса - выход
         body['resource'] = 2;
         try {
-            yield asyncFetch('sysserver/addDeviceEvent', `&${queryParse(body)}`, null, null, 'PUT');
+            yield asyncFetch('sysserver/addDeviceEvent', `&${queryParse(body)}`, null, null, 'PUT', host);
         }
         catch (e) {
             throw new Error(`Не возможно сгенерировать проход: ${e}`);
         }
     });
 }
-function deleteDataAfterComplete(idsMap) {
+function deleteDataAfterComplete(idsMap, server) {
     return __awaiter(this, void 0, void 0, function* () {
+        const host = `http://${server}/api`;
         if (idsMap.size == 0) {
             return Promise.reject({ error: "Отсутствуют данные для удаления" });
         }
-        console.log(idsMap);
+        //console.log(idsMap);
         try {
-            yield asyncFetch(`devices/${idsMap.get('devices')[0]}/detach`, "", null, null, "POST");
-            yield deleteDependencies(idsMap);
+            yield asyncFetch(`devices/${idsMap.get('devices')[0]}/detach`, "", null, null, "POST", host);
+            yield deleteDependencies(idsMap, host);
         }
         catch (e) {
             return Promise.reject({ error: `Не удалось удалить данные ${e}` });
@@ -594,9 +597,7 @@ function workTimeCounter(intervals, beginDate, endDate) {
         }
         dayInterator(beginDate, endDate, (year, month, day, iIntervals) => {
             let date = new Date(year, month - 1, day);
-            console.log(iIntervals);
             let intervalArray = iIntervals[weekIndex[date.getDay()]]['intervals'];
-            console.log(intervalArray);
             //Если есть интервалы в графике
             if (intervalArray.length != 0) {
                 wH += intervalForDayCount(intervalArray);
@@ -606,8 +607,8 @@ function workTimeCounter(intervals, beginDate, endDate) {
     });
 }
 exports.workTimeCounter = workTimeCounter;
-function monthlyLauncher(schedule) {
-    return new MonthlyLauncher(schedule);
+function monthlyLauncher(schedule, server) {
+    return new MonthlyLauncher(schedule, server);
 }
 exports.monthlyLauncher = monthlyLauncher;
 ;

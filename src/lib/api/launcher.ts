@@ -2,7 +2,7 @@ import 'unfetch/polyfill';
 import * as depend from './dependencies';
 import * as prepare from './boots'
 const headers = {'Content-Type':'application/json','Accept': 'application/json'};
-const host = 'http://localhost:8080/api'; 
+//const host = 'http://localhost:8080/api'; 
 let dayCount:any = {
   0:checkFebruar(0),
   1:checkFebruar(1),
@@ -21,15 +21,17 @@ let dayCount:any = {
 class Launcher{
   begin: any;
   end: any;
+  host:any;
 
   dependencies: any = depend.default;
 
   protected willReplacedByIdsDep:any
   protected idsMap:any = new Map();
 
-  constructor(store:any){
+  constructor(store:any,server:string){
     this.begin = store.beginDate;
     this.end = store.endDate;
+    this.host =`http://${server}/api`; 
   }
   
   //Валидация начала и конца генерации
@@ -96,7 +98,7 @@ class Launcher{
           //Метод POST || PUT
           let method  = typeof this.dependencies[`${item}`].method === 'undefined' ? "PUT" : this.dependencies[`${item}`].method;
           //выполняем запрос
-          var id = await asyncFetch(item,query,bodyData,methodString,method);
+          var id = await asyncFetch(item,query,bodyData,methodString,method,this.host);
           methodsComplete.push(item);
         }
         //если в респонсе есть айди добавляем его в idsMap и вставляем значение в зависимости
@@ -134,6 +136,7 @@ class MonthlyLauncher extends Launcher{
   aceess_zones:any = [];
   schedule_id:any;
   removeDataAfterComplete:any;
+  host:any;
   
   //Общее кол-во часов за промежуток по графику
   totalWorkTime:any = 0;
@@ -146,8 +149,9 @@ class MonthlyLauncher extends Launcher{
   willReplacedByIdsDep:any
   idsMap:any;
   
-  constructor(store:any){
-    super(store);
+  constructor(store:any,server:string){
+    super(store,server);
+    this.host = `http://${server}/api`; 
     this.willReplacedByIdsDep = super.willReplacedByIdsDep;
     this.begin = store.beginDate;
     this.end = store.endDate
@@ -263,7 +267,7 @@ class MonthlyLauncher extends Launcher{
 
     //Добавление графика в бд и редактирование сотрудника
     try{
-      this.schedule_id = await asyncFetch('taSchedule',"",body,null,'PUT');
+      this.schedule_id = await asyncFetch('taSchedule',"",body,null,'PUT',this.host);
       if (typeof this.schedule_id !== 'undefined') {
         //добавляем график для в карту с данными
         this.willReplacedByIdsDep.get('users/staff')[0]['body']['work_schedule'] = this.schedule_id;
@@ -272,7 +276,7 @@ class MonthlyLauncher extends Launcher{
         if (typeof userId ==='undefined' ){ 
           return Promise.reject({error:'Не возможно добавить график для сотрудника userId не найден'});
         }
-        await asyncFetch(`users/staff/${userId}`,'',this.willReplacedByIdsDep.get('users/staff')[0]['body'],null,'POST')
+        await asyncFetch(`users/staff/${userId}`,'',this.willReplacedByIdsDep.get('users/staff')[0]['body'],null,'POST',this.host);
       }
     }
     catch(e){
@@ -354,7 +358,7 @@ class MonthlyLauncher extends Launcher{
             let body = this.willReplacedByIdsDep.get('sysserver/addDeviceEvent')[0]['query'];
 
             //Сгенерированое время для интервала меньше чем интервал
-            await generateMinorInterval(body,entryTime,generatedCurientInterval,year,month,day);
+            await generateMinorInterval(body,entryTime,generatedCurientInterval,year,month,day,this.host);
 
           }
         }
@@ -370,7 +374,7 @@ class MonthlyLauncher extends Launcher{
   async timeTracking(){
     let query = `&dateBegin=${this.begin}&dateEnd=${this.end}`;
     try{
-      var timeTrackingResult = await asyncFetch('taReports/timetracking',query,null,null,"GET");
+      var timeTrackingResult = await asyncFetch('taReports/timetracking',query,null,null,"GET",this.host);
     }
     catch(e){
       return Promise.reject({error:`${e}`});
@@ -398,12 +402,12 @@ class MonthlyLauncher extends Launcher{
  * @param ids массив типа метод - id
  * возвращает void
  */
-async function deleteDependencies(ids:any){
+async function deleteDependencies(ids:any,host:string){
   let methodsComplete = [];
   for (let item of ids.keys()){
     if(item !== 'divisions' && item !=='users/staff' && item!=='devices/{id}/attach'){
       for(let key in ids.get(item)){
-        await asyncFetch(item,"",null,`${item}/${ids.get(item)[key]}`,"DELETE");
+        await asyncFetch(item,"",null,`${item}/${ids.get(item)[key]}`,"DELETE",host);
       }
       methodsComplete.push(item);
     }
@@ -411,7 +415,7 @@ async function deleteDependencies(ids:any){
   return methodsComplete;
 }
 
-async function asyncFetch(item:string,query:string,bodyData:any,methodString:any,method:string){
+async function asyncFetch(item:string,query:string,bodyData:any,methodString:any,method:string,host:string){
   let response:any;
   try {
     if(method != 'GET'){
@@ -551,13 +555,13 @@ function intervalForDayCount(intervalArray:any){
   return totalTime;
 }
 
-async function generateMinorInterval(body:any,entryTime:any,generatedCurientInterval:any,year:any,month:any,day:any){
+async function generateMinorInterval(body:any,entryTime:any,generatedCurientInterval:any,year:any,month:any,day:any,host:string){
   //Устанавливаем время
   body['date'] = `${year}-${month}-${day}:${entryTime}`;
   //тип ресурса - вход
   body['resource'] = 1;
   try{
-    await asyncFetch('sysserver/addDeviceEvent',`&${queryParse(body)}`,null,null,'PUT');
+    await asyncFetch('sysserver/addDeviceEvent',`&${queryParse(body)}`,null,null,'PUT',host);
   }
   catch(e){
     throw new Error(`Не возможно сгенерировать проход: ${e}`);
@@ -567,19 +571,20 @@ async function generateMinorInterval(body:any,entryTime:any,generatedCurientInte
   //тип ресурса - выход
   body['resource'] = 2;
   try{
-    await asyncFetch('sysserver/addDeviceEvent',`&${queryParse(body)}`,null,null,'PUT');
+    await asyncFetch('sysserver/addDeviceEvent',`&${queryParse(body)}`,null,null,'PUT',host);
   }
   catch(e){
     throw new Error(`Не возможно сгенерировать проход: ${e}`);
   }
 }
 
-export async function deleteDataAfterComplete(idsMap:any):Promise<any>{
+export async function deleteDataAfterComplete(idsMap:any,server:string):Promise<any>{
+  const host = `http://${server}/api`; 
   if(idsMap.size == 0) {return Promise.reject({error:"Отсутствуют данные для удаления"});}
-  console.log(idsMap);
+  //console.log(idsMap);
   try{
-    await asyncFetch(`devices/${idsMap.get('devices')[0]}/detach`,"",null,null,"POST")
-    await deleteDependencies(idsMap);
+    await asyncFetch(`devices/${idsMap.get('devices')[0]}/detach`,"",null,null,"POST",host)
+    await deleteDependencies(idsMap,host);
   }
   catch(e){
     return Promise.reject({error:`Не удалось удалить данные ${e}`});
@@ -608,9 +613,7 @@ export async function workTimeCounter(intervals:any,beginDate:any,endDate:any){
 
   dayInterator(beginDate,endDate,(year:number,month:number,day:number,iIntervals:any)=>{
     let date = new Date(year,month -1,day);
-    console.log(iIntervals);
     let intervalArray = iIntervals[weekIndex[date.getDay()]]['intervals'];
-    console.log(intervalArray);
     //Если есть интервалы в графике
     if(intervalArray.length != 0){
       wH +=  intervalForDayCount(intervalArray)
@@ -619,6 +622,6 @@ export async function workTimeCounter(intervals:any,beginDate:any,endDate:any){
   return wH;
 }
 
-export function monthlyLauncher(schedule:any){
-  return new MonthlyLauncher(schedule);
+export function monthlyLauncher(schedule:any,server:string){
+  return new MonthlyLauncher(schedule,server);
 };

@@ -12,8 +12,11 @@ import ScheduleConfig from './ScheduleConfig';
 class AutoGenerator extends Component {
   
   static PropTypes = {
+    //from store ?
     schedule:PropTypes.object.isRequired,
-    terminal:PropTypes.object.isRequired
+    terminal:PropTypes.object.isRequired,
+    //from MAinPage
+    server:PropTypes.string.isRequired
   }
 
   state = {
@@ -96,9 +99,11 @@ class AutoGenerator extends Component {
 
   deleteMiddleMethodData = async () =>{
     const {idsMap} = this.props.schedule;
-    const {addMsgToTerminal} = this.props
-    await deleteDataAfterComplete(idsMap).then(result=>{
+    const {addMsgToTerminal} = this.props;
+    const {server} = this.props;
+    await deleteDataAfterComplete(idsMap,server).then(result=>{
       addMsgToTerminal(result);
+      this.setState({open:true});
     }).catch(reason=>{
       addMsgToTerminal(reason);
       this.setState({open:true});
@@ -107,11 +112,12 @@ class AutoGenerator extends Component {
   }
 
   onSubmit = async() => {
-    const {changeScheduleValueSimple} = this.props
+    const {changeScheduleValueSimple} = this.props;
     const {schedule} = this.props;
     const {addMsgToTerminal} = this.props;
-    const {removeDataAfterComplete} = this.props.schedule
-    let monthlyLauncher = launcher.monthlyLauncher(schedule);
+    const {removeDataAfterComplete} = this.props.schedule;
+    const {server} = this.props;
+    let monthlyLauncher = launcher.monthlyLauncher(schedule,server);
 
     //Проверка формата даты
     await monthlyLauncher.checkDates().then(result=>{
@@ -169,10 +175,9 @@ class AutoGenerator extends Component {
     });
 
     let idsMap = await monthlyLauncher.getIds();
-    
     if(removeDataAfterComplete == true){
-      await deleteDataAfterComplete(idsMap).then(result=>{
-        addMsgToTerminal(result)
+      await deleteDataAfterComplete(idsMap,server).then(result=>{
+        addMsgToTerminal(result);
       }).catch(reason=>{
         addMsgToTerminal(reason);
         this.setState({open:true});

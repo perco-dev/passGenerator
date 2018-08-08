@@ -17,29 +17,23 @@ class MainPage extends PureComponent {
   }
 
   state = {
-    sState:0,
+    sState:0, //server state 0 - disconnect
     display:'none'
   }
+
   shouldComponentUpdate(nextProps,nextState){
-    if(nextState.sState != this.state.sState){
-      this.checkServerState(nextProps.server);
+    const {changeServer} = this.props
+    if(nextState.display != this.state.display || nextState.sState != this.state.sState){
+      if(nextProps.server != this.props.server)  changeServer(nextProps.server);
       return true;
     }
-    else if(nextState.display != this.state.display){
-      return true;
-    }
+    return false;
   }
-
-  componentDidMount(){
-    const {server} = this.props;
-    this.checkServerState(server);
-  }
-
 
   render(){
     const {section} = this.props;
-    const {server} = this.props;
-    let {display} = this.state;
+    const {server}  = this.props;
+    let   {display} = this.state;
     return(
       <div className='container-fluid'>
         <ul className="nav" style= {{'background-color':'rgb(230, 230, 230)'}}>
@@ -59,7 +53,7 @@ class MainPage extends PureComponent {
             <a className="nav-link" id = 'status' onClick={this.showInput}>{server}{this.serverStateLighting()}</a>
           </li>
           <li>
-            <form className='form-inline my-2 my-lg-0 ml-auto' style={{'display':display}} onSubmit={this.setServerAdress}>
+            <form className='form-inline my-2 my-lg-0 ml-auto' style={{'display':display}} onSubmit={this.changeServerSubmit}>
               <input className="form-control mr-sm-2" onChange = {this.getServer}/>
               <button className="btn btn-outline-success my-2 my-sm-0" type="submit">></button>
             </form>
@@ -82,33 +76,42 @@ class MainPage extends PureComponent {
   }
   
   showInput = () =>{
+    const {display} = this.state;
     this.setState({
-      display:'inline'
-    })
+      display: display == 'none' ? 'inline' : 'none'
+    });
   }
 
-  setServerAdress = async () =>{
-    const {server} = this.props;
-    this.checkServerState(server);
+  changeServerSubmit = e =>{
+    const {server} = this.props
+    const {changeServer} = this.props;
+    changeServer(server);
     this.setState({
-      display:'none'
+      sState:1
     });
-  } 
+    this.checkServerState();
+    e.preventDefault();
+  }
 
-  async checkServerState(host){
-    let response = await fetch(`http://${host}:8080/sysserver/getServerState?token=master`,{method:'GET'});
-    let responseBody  = await response.text();
+
+  async checkServerState(){
+    const {server} = this.props;
     try{
+      let response = await fetch(`http://${server}/sysserver/getServerState?token=master`,{method:'GET'});
+      let responseBody  = await response.text();
       let sState =  typeof JSON.parse(responseBody).result === 'undefined' ? 1 : 0;
       this.setState({
-        sState:sState
+        sState:sState,
+        display:'none'
       });
     }
     catch(e){
       this.setState({
-        sState:0
-      })
+        sState:0,
+        display:'none'
+      });
     }
+
   }
 
   serverStateLighting(){
@@ -121,7 +124,7 @@ class MainPage extends PureComponent {
 
   showSection = section =>{
     switch (section){
-      case 'auto' : return <AutoGenerator/>
+      case 'auto' : return <AutoGenerator server = {this.props.server}/>
       default : return(<p>HILARITAS POPVLI ROMANI </p>);
     }
   }
