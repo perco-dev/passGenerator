@@ -1,8 +1,9 @@
 import 'unfetch/polyfill';
 import * as depend from './dependencies';
-import * as prepare from './boots'
+import * as prepare from './boots';
 const headers = {'Content-Type':'application/json','Accept': 'application/json'};
 //const host = 'http://localhost:8080/api'; 
+
 let dayCount:any = {
   0:checkFebruar(0),
   1:checkFebruar(1),
@@ -359,7 +360,6 @@ class MonthlyLauncher extends Launcher{
 
             //Сгенерированое время для интервала меньше чем интервал
             await generateMinorInterval(body,entryTime,generatedCurientInterval,year,month,day,this.host);
-
           }
         }
       });
@@ -591,6 +591,7 @@ export async function deleteDataAfterComplete(idsMap:any,server:string):Promise<
   }
   return Promise.resolve({msg:'Данные удалены,удалите пользователя и подразделения в ручную'});
 }
+
 export async function workTimeCounter(intervals:any,beginDate:any,endDate:any){
   const weekIndex:any = {0:'sunday',1:'monday',2:'tuesday',3:'wednesday',4:'thursday',5:'friday',6:'saturday'};
   let wH = 0;
