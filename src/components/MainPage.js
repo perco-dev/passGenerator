@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
 import { findDOMNode } from 'react-dom';
 import {changeSectionType, changeServer} from '../AC';
-import AutoGenerator from './AutoGenerator';
+import AutoGenerator from './autoGenerator/AutoGenerator';
 
 import "bootstrap/dist/css/bootstrap.css";
 
