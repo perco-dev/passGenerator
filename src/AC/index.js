@@ -1,3 +1,4 @@
+//Смена раздела меню
 export function changeSectionType(type){
   return {
     type:`SECTION`,
@@ -5,6 +6,7 @@ export function changeSectionType(type){
   }
 }
 
+//Изменение графика
 export function changeScheduleValueSimple(value){
   return{
     type:'SCHEDULE_CHANGE_SIMPLE_PROPERTY',
@@ -18,6 +20,15 @@ export function changeScheduleValueComplex(value){
   }
 }
 
+//Настраивемый генератор добавление помещения
+export function addRoom(value){
+  return {
+    type: 'ADD_ROOM',
+    payload:value
+  }
+}
+
+//Добавление сообщения в модальное окно
 export function addMsgToTerminal(value){
   return {
     type: 'MESSAGE',
@@ -25,6 +36,7 @@ export function addMsgToTerminal(value){
   }
 }
 
+//Смена сервера
 export function changeServer(value){
   return {
     type: 'SERVER',

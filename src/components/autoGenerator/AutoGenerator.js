@@ -1,13 +1,13 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
-import { changeScheduleValueSimple,changeScheduleValueComplex,addMsgToTerminal} from '../AC';
+import { changeScheduleValueSimple,changeScheduleValueComplex,addMsgToTerminal} from '../../AC';
 import { findDOMNode } from 'react-dom';
 
-import ModalTerminal from './ModalTerminal';
-import * as launcher  from '../lib/api/launcher';
-import {deleteDataAfterComplete} from '../lib/api/launcher';
-import ScheduleConfig from './ScheduleConfig';
+import ModalTerminal from '../ModalTerminal';
+import * as launcher  from '../../lib/api/launcher';
+import {deleteDataAfterComplete} from '../../lib/api/launcher';
+import ScheduleConfig from '../ScheduleConfig';
 
 class AutoGenerator extends Component {
   
