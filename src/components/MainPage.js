@@ -12,7 +12,7 @@ class MainPage extends PureComponent {
     //from store
     section: PropTypes.string,
     sectionTypeChanger:PropTypes.func,
-    server:PropTypes.string,
+    server:PropTypes.object,
     changeServer:PropTypes.func
   }
 
@@ -32,7 +32,8 @@ class MainPage extends PureComponent {
 
   render(){
     const {section} = this.props;
-    const {server}  = this.props;
+    const {host}  = this.props.server;
+    const {ssl} = this.props.server;
     let   {display} = this.state;
     return(
       <div className='container-fluid'>
@@ -50,12 +51,13 @@ class MainPage extends PureComponent {
             <a className="nav-link" href="#" onClick = {()=>{this.sectionChange('delete')}}>удалить</a>
           </li>
           <li className="nav-item ml-auto">
-            <a className="nav-link" id = 'status' onClick={this.showInput}>{server}{this.serverStateLighting()}</a>
+            <a className="nav-link" id = 'status' onClick={this.showInput}>{host}{this.serverStateLighting()}</a>
           </li>
           <li>
             <form className='form-inline my-2 my-lg-0 ml-auto' style={{'display':display}} onSubmit={this.changeServerSubmit}>
-              <input className="form-control mr-sm-2" onChange = {this.getServer}/>
-              <button className="btn btn-outline-success my-2 my-sm-0" type="submit">></button>
+              <input className="form-control mr-sm-2" onChange = {this.getServer('host')}/>
+              <input className="form-check-input" type="checkbox" defaultChecked={ssl ? 'checked' : ''} onChange = {this.getServer('ssl')}/> SSL
+              <button className="btn btn-outline-success my-2 my-sm-0" type="submit" style={{'margin-left':'15px'}}>></button>
             </form>
           </li>
         </ul>
@@ -70,9 +72,18 @@ class MainPage extends PureComponent {
     return findDOMNode(ref);
   }
   
-  getServer = e =>{
+  getServer = e => property =>{
+    const {host} = this.props.server;
+    let {ssl} = this.props.server;
+
     const {changeServer} = this.props;
-    changeServer(e.target.value);
+    if(property == 'host'){
+      changeServer({'host':e.target.value,'ssl':ssl});
+    }
+    else if(property = 'ssl'){
+      ssl = ssl ? false : true;
+      changeServer({'host':host,'ssl':ssl})
+    }
   }
   
   showInput = () =>{
@@ -83,7 +94,7 @@ class MainPage extends PureComponent {
   }
 
   changeServerSubmit = e =>{
-    const {server} = this.props
+    const {server} = this.props;
     const {changeServer} = this.props;
     changeServer(server);
     this.setState({
@@ -95,9 +106,14 @@ class MainPage extends PureComponent {
 
 
   async checkServerState(){
-    const {server} = this.props;
+    const {host} = this.props.server;
+    const {ssl} = this.props.server;
     try{
-      let response = await fetch(`http://${server}/sysserver/getServerState?token=master`,{method:'GET'});
+       
+      let response =  ssl 
+        ? await fetch(`https://${host}/sysserver/getServerState?token=master`,{method:'GET'})
+        : await fetch(`http://${host}/sysserver/getServerState?token=master`,{method:'GET'})
+
       let responseBody  = await response.text();
       let sState =  typeof JSON.parse(responseBody).result === 'undefined' ? 1 : 0;
       this.setState({

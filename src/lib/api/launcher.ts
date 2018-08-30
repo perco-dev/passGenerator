@@ -29,10 +29,10 @@ class Launcher{
   protected willReplacedByIdsDep:any
   protected idsMap:any = new Map();
 
-  constructor(store:any,server:string){
+  constructor(store:any,server:any){
     this.begin = store.beginDate;
     this.end = store.endDate;
-    this.host =`http://${server}/api`; 
+    this.host = server.ssl ? `https://${server.host}/api` : `http://${server.host}/api`; 
   }
   
   //Валидация начала и конца генерации
@@ -150,9 +150,9 @@ class MonthlyLauncher extends Launcher{
   willReplacedByIdsDep:any
   idsMap:any;
   
-  constructor(store:any,server:string){
+  constructor(store:any,server:any){
     super(store,server);
-    this.host = `http://${server}/api`; 
+    this.host = this.host = server.ssl ? `https://${server.host}/api` : `http://${server.host}/api`; 
     this.willReplacedByIdsDep = super.willReplacedByIdsDep;
     this.begin = store.beginDate;
     this.end = store.endDate
@@ -623,6 +623,6 @@ export async function workTimeCounter(intervals:any,beginDate:any,endDate:any){
   return wH;
 }
 
-export function monthlyLauncher(schedule:any,server:string){
+export function monthlyLauncher(schedule:any,server:object){
   return new MonthlyLauncher(schedule,server);
 };
