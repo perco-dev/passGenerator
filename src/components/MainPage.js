@@ -72,7 +72,7 @@ class MainPage extends PureComponent {
     return findDOMNode(ref);
   }
   
-  getServer = e => property =>{
+  getServer = property => e =>{
     const {host} = this.props.server;
     let {ssl} = this.props.server;
 
@@ -101,7 +101,6 @@ class MainPage extends PureComponent {
       sState:1
     });
     this.checkServerState();
-    e.preventDefault();
   }
 
 
