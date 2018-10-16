@@ -1,4 +1,4 @@
-export default (server = {host:'localhost:8080',ssl:false},action) => {
+export default (server = { host: 'localhost:8080', ssl: false}, action) => {
   const {type} = action;
   switch(type){
     case 'SERVER' : {

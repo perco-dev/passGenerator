@@ -6,24 +6,26 @@ import {changeSectionType, changeServer} from '../AC';
 import AutoGenerator from './autoGenerator/AutoGenerator';
 
 import "bootstrap/dist/css/bootstrap.css";
+import CustomGenerator from './customGenerator/CustomGenerator';
 
 class MainPage extends PureComponent {
   static PropTypes = {
     //from store
     section: PropTypes.string,
-    sectionTypeChanger:PropTypes.func,
-    server:PropTypes.object,
-    changeServer:PropTypes.func
+    sectionTypeChanger: PropTypes.func,
+    server: PropTypes.object,
+    changeServer: PropTypes.func,
   }
 
   state = {
-    sState:0, //server state 0 - disconnect
-    display:'none'
+    connectionState: 0, //server state 0 - disconnect
+    display: 'none'
   }
-
-  shouldComponentUpdate(nextProps,nextState){
-    const {changeServer} = this.props
-    if(nextState.display != this.state.display || nextState.sState != this.state.sState){
+  
+  shouldComponentUpdate(nextProps, nextState){
+    console.log(nextProps);
+    const {changeServer} = this.props;
+    if(nextState.display != this.state.display || nextState.connectionState != this.state.connectionState || nextProps.section !== this.props.section){
       if(nextProps.server != this.props.server)  changeServer(nextProps.server);
       return true;
     }
@@ -32,11 +34,12 @@ class MainPage extends PureComponent {
 
   render(){
     const {section} = this.props;
-    const {host}  = this.props.server;
-    const {ssl} = this.props.server;
+    const {host, ssl}  = this.props.server;
     let   {display} = this.state;
+
     return(
       <div className='container-fluid'>
+        {/** Меню */}
         <ul className="nav" style= {{'background-color':'rgb(230, 230, 230)'}}>
           <li className="nav-item">
             <a className="nav-link" onClick = {()=>this.sectionChange('auto')} href="#">авто</a>
@@ -54,9 +57,10 @@ class MainPage extends PureComponent {
             <a className="nav-link" id = 'status' onClick={this.showInput}>{host}{this.serverStateLighting()}</a>
           </li>
           <li>
-            <form className='form-inline my-2 my-lg-0 ml-auto' style={{'display':display}} onSubmit={this.changeServerSubmit}>
-              <input className="form-control mr-sm-2" onChange = {this.getServer('host')}/>
-              <input className="form-check-input" type="checkbox" defaultChecked={ssl ? 'checked' : ''} onChange = {this.getServer('ssl')}/> SSL
+            {/**Переключалка сервера*/}
+            <form className='form-inline my-2 my-lg-0 ml-auto' style={{'display': display}} onSubmit={this.changeServerSubmit}>
+              <input  className="form-control mr-sm-2" onChange = {this.getServer('host')}/>
+              <input  className="form-check-input" type="checkbox" defaultChecked={ssl ? 'checked' : ''} onChange = {this.getServer('ssl')}/> SSL
               <button className="btn btn-outline-success my-2 my-sm-0" type="submit" style={{'margin-left':'15px'}}>></button>
             </form>
           </li>
@@ -73,16 +77,15 @@ class MainPage extends PureComponent {
   }
   
   getServer = property => e =>{
-    const {host} = this.props.server;
-    let {ssl} = this.props.server;
+    console.log(property,e.target.value);
+    const {host, ssl} = this.props.server;
 
     const {changeServer} = this.props;
     if(property == 'host'){
-      changeServer({'host':e.target.value,'ssl':ssl});
+      changeServer({'host': e.target.value,'ssl': ssl});
     }
     else if(property = 'ssl'){
-      ssl = ssl ? false : true;
-      changeServer({'host':host,'ssl':ssl})
+      changeServer({'host':host,'ssl':ssl ? false : true})
     }
   }
   
@@ -97,55 +100,50 @@ class MainPage extends PureComponent {
     const {server} = this.props;
     const {changeServer} = this.props;
     changeServer(server);
-    this.setState({
-      sState:1
-    });
     this.checkServerState();
   }
-
 
   async checkServerState(){
     const {host} = this.props.server;
     const {ssl} = this.props.server;
     try{
-       
       let response =  ssl 
-        ? await fetch(`https://${host}/sysserver/getServerState?token=master`,{method:'GET'})
-        : await fetch(`http://${host}/sysserver/getServerState?token=master`,{method:'GET'})
-
-      let responseBody  = await response.text();
-      let sState =  typeof JSON.parse(responseBody).result === 'undefined' ? 1 : 0;
+        ? await fetch(`https://${host}/sysserver/getServerState?token=master`, {method: 'GET'})
+        : await fetch(`http://${host}/sysserver/getServerState?token=master`,  {method: 'GET'})
+      let connectionState =  response.status === 200 ? 1 : 0 ;
       this.setState({
-        sState:sState,
+        connectionState: connectionState,
         display:'none'
       });
     }
     catch(e){
       this.setState({
-        sState:0,
+        connectionState:0,
         display:'none'
       });
     }
-
   }
 
   serverStateLighting(){
-    const {sState} = this.state;
-    let color = sState == 0 ? 'red' : 'green';
+    const {connectionState} = this.state;
+    let color = connectionState == 0 ? 'red' : 'green';
     return (
       <span style = {{'height':'10px','width':'10px','backgroundColor':color,'border-radius':'50%','display':'inline-block','margin-left':'5px'}}></span>
     )
   }
 
   showSection = section =>{
+    console.log(section);
     switch (section){
-      case 'auto' : return <AutoGenerator server = {this.props.server}/>
+      case 'auto' : return <AutoGenerator server = {this.props.server }/>
+      case 'custom' : return <CustomGenerator server = {this.props.server }/>
       default : return(<p>HILARITAS POPVLI ROMANI </p>);
     }
   }
 
   sectionChange = type =>{
-    this.props.changeSectionType(type) 
+    console.log(type);
+    this.props.changeSectionType(type);
   }
 
 };

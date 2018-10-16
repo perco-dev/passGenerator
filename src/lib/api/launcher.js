@@ -33,7 +33,7 @@ class Launcher {
         this.idsMap = new Map();
         this.begin = store.beginDate;
         this.end = store.endDate;
-        this.host = `http://${server}/api`;
+        this.host = server.ssl ? `https://${server.host}/api` : `http://${server.host}/api`;
     }
     //Валидация начала и конца генерации
     checkDates() {
@@ -130,7 +130,7 @@ class MonthlyLauncher extends Launcher {
         this.workDayCount = 0;
         //Среднее кол-во часов врабочем дне по графику
         this.weekIndex = { 0: 'sunday', 1: 'monday', 2: 'tuesday', 3: 'wednesday', 4: 'thursday', 5: 'friday', 6: 'saturday' };
-        this.host = `http://${server}/api`;
+        this.host = this.host = server.ssl ? `https://${server.host}/api` : `http://${server.host}/api`;
         this.willReplacedByIdsDep = super.willReplacedByIdsDep;
         this.begin = store.beginDate;
         this.end = store.endDate;
