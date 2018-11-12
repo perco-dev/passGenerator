@@ -6,7 +6,7 @@
           "deviceId": 'devices_id_0',
           "type":'17',
           "userId":'users/staff_id_0',
-          "resource":0,
+          "resource":0,G
           "resourceType":0,
           "data":0,
           "identifier":0,
@@ -26,7 +26,7 @@
             "ip_addr": "95.173.136.70",
             "net_mask": "160.82.119.185",
             "ip_router":"13.131.15.45",
-            "mac_addr":"08:62:66:7b:d7:41"
+            "mac_addr":"08:62:66:7b:d7:50" //uniq
           }
         ]
       }
@@ -53,16 +53,17 @@
     "fields":[
       {
         "body":{
-          "last_name" : "генератор",
-          "first_name" : "генераторович",
-          "division" : "divisions_id_0", 
+        "last_name" : "генератор11", //uniq
+        "first_name" : "генераторович11", //uniq
+        "middle_name" : "генераторов", // uniq
+        "division" : "divisions_id_0", 
           "hiring_date": "begin_datetime_id_0",
-          "work_schedule":"Добавиться после добавления графика в гшенераторе",
+          "work_schedule":"Добавиться после добавления графика в генераторе",
           "identifier": [
             {
               "begin_datetime": "begin_datetime_id_0",
               "end_datetime": "end_datetime_id_0",
-              "identifier": "1111114"
+              "identifier": "1111140" // uniq
             }
           ]
         }
@@ -76,7 +77,7 @@
       {
         "body":{
           "parent_id": 0,
-          "name": "it",
+          "name": "test7", //uniq
         }
       }
     ],
@@ -87,7 +88,7 @@
     "fields": [
       {
         "body":{
-          "name" : "office",
+        "name" : "office10", //uniq
           "parentId" : 1
         }
       }

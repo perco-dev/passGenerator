@@ -25,7 +25,7 @@
     "uglifyify": "^5.0.0",
     "webpack": "^4.8.3",
     "webpack-cli": "^2.1.4",
-    "webpack-dev-server": "^3.1.4"
+    "webpack-dev-server": "^3.1.9"
   },
   "dependencies": {
     "@types/react": "^16.4.0",
@@ -34,16 +34,20 @@
     "babel-runtime": "^6.26.0",
     "jquery": "^3.3.1",
     "mocha": "^5.2.0",
+    "mysql": "^2.16.0",
     "path": "^0.12.7",
     "popper.js": "^1.14.3",
     "prop-types": "^15.6.1",
+    "r": "0.0.5",
     "rc-slider": "^8.6.1",
     "react": "^16.4.0",
     "react-bootstrap": "^0.32.1",
     "react-dom": "^16.4.0",
     "react-redux": "^5.0.7",
     "react-responsive-modal": "^3.2.0",
+    "react-svg-draw": "0.0.11",
     "redux": "^4.0.0",
+    "snapsvg-cjs": "0.0.6",
     "tsc": "^1.20150623.0",
     "typescript": "^2.9.1",
     "unfetch": "^3.0.0"

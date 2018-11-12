@@ -139,3 +139,4 @@ function bootstrap(test) {
     return new Prepare(test);
 }
 exports.bootstrap = bootstrap;
+//# sourceMappingURL=boots.js.map

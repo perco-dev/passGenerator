@@ -238,17 +238,17 @@ class MonthlyLauncher extends Launcher {
             let body = {
                 name: this.name,
                 work_schedule_type_id: 2,
-                allow_coming_later: `${yield timeFormatingFromSeconds(toSeconds(this.allow_coming_later))}`,
-                allow_leaving_before: `${yield timeFormatingFromSeconds(toSeconds(this.allow_living_before))}`,
-                overtime: `${yield toSeconds(this.overtime)}`,
-                undertime: `${yield toSeconds(this.undertime)}`,
+                allow_coming_later: '00:00',
+                allow_leaving_before: '00:00',
+                overtime: '00:00',
+                undertime: '00:00',
                 is_not_holiday: this.is_not_holiday != null ? this.is_not_holiday : false,
                 is_first_input_last_output: this.is_first_input_last_output != null ? this.is_first_input_last_output : false,
                 begin_date: this.begin,
                 intervals: scheduleIntervals,
                 access_zones: access_zone
             };
-            //console.log("body",body);
+            console.log("body", body);
             //Добавление графика в бд и редактирование сотрудника
             try {
                 this.schedule_id = yield asyncFetch('taSchedule', "", body, null, 'PUT', this.host);
@@ -612,3 +612,4 @@ function monthlyLauncher(schedule, server) {
 }
 exports.monthlyLauncher = monthlyLauncher;
 ;
+//# sourceMappingURL=launcher.js.map

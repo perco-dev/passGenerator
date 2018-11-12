@@ -1,7 +1,6 @@
 import React, { PureComponent } from 'react';
 import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
-import { findDOMNode } from 'react-dom';
 import {changeSectionType, changeServer} from '../AC';
 import AutoGenerator from './autoGenerator/AutoGenerator';
 
@@ -71,10 +70,6 @@ class MainPage extends PureComponent {
       </div>
     )
   }
-
-  setRef = ref =>{
-    return findDOMNode(ref);
-  }
   
   getServer = property => e =>{
     console.log(property,e.target.value);
@@ -133,7 +128,6 @@ class MainPage extends PureComponent {
   }
 
   showSection = section =>{
-    console.log(section);
     switch (section){
       case 'auto' : return <AutoGenerator server = {this.props.server }/>
       case 'custom' : return <CustomGenerator server = {this.props.server }/>
@@ -142,7 +136,6 @@ class MainPage extends PureComponent {
   }
 
   sectionChange = type =>{
-    console.log(type);
     this.props.changeSectionType(type);
   }
 

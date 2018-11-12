@@ -253,18 +253,23 @@ class MonthlyLauncher extends Launcher{
     let body = {
       name:this.name,
       work_schedule_type_id:2,
-      allow_coming_later: `${await timeFormatingFromSeconds(toSeconds(this.allow_coming_later))}`,
-      allow_leaving_before: `${await timeFormatingFromSeconds(toSeconds(this.allow_living_before))}` ,
-      overtime:`${await toSeconds(this.overtime)}`,
-      undertime:`${await toSeconds(this.undertime)}`,
+      allow_coming_later: '00:00',//`${await timeFormatingFromSeconds(toSeconds(this.allow_coming_later))}`,
+      allow_leaving_before: '00:00',//`${await timeFormatingFromSeconds(toSeconds(this.allow_living_before))}` ,
+      overtime: '00:00',//`${await toSeconds(this.overtime)}`,
+      undertime: '00:00',//`${await toSeconds(this.undertime)}`,
       is_not_holiday: this.is_not_holiday != null ? this.is_not_holiday : false ,
       is_first_input_last_output: this.is_first_input_last_output != null ? this.is_first_input_last_output : false,
       begin_date:this.begin,
+
       intervals:scheduleIntervals,
+
       access_zones:access_zone
+
     }
+
     
-    //console.log("body",body);
+
+    console.log("body",body);
 
     //Добавление графика в бд и редактирование сотрудника
     try{
